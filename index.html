@@ -130,6 +130,11 @@ body{
 .slot.filled{background:var(--black); color:var(--white);}
 .slot.empty{color:var(--line-300);}
 .manager-empty-note{font-family:var(--mono); font-size:10px; color:var(--ink-400); margin-top:10px;}
+.squad-list{margin-top:12px; border-top:1.5px dashed var(--line-300); padding-top:10px; display:flex; flex-direction:column; gap:6px;}
+.squad-item{display:flex; justify-content:space-between; align-items:baseline; gap:8px;}
+.squad-item-name{font-family:var(--body); font-size:12.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.squad-item-price{font-family:var(--mono); font-size:11px; color:var(--ink-600); flex-shrink:0;}
+.squad-empty{font-family:var(--mono); font-size:10px; color:var(--ink-400); text-transform:uppercase; letter-spacing:.5px;}
 
 .add-manager-card{
   border:2px dashed var(--ink-400); display:flex; align-items:center; justify-content:center;
@@ -599,9 +604,10 @@ function renderManagers(){
     const pct = total > 0 ? Math.min(100,(spent/total)*100) : 0;
     const slots = slotCount(id);
 
-    const soldNames = Object.entries(players)
+    const soldPlayers = Object.entries(players)
       .filter(([pid,p])=> p.status==='sold' && p.soldTo===id)
-      .map(([pid,p])=> p.name);
+      .map(([pid,p])=> p);
+    const soldNames = soldPlayers.map(p=>p.name);
 
     let slotHtml = '';
     for(let i=0;i<MAX_SLOTS_PER_MANAGER;i++){
@@ -610,6 +616,17 @@ function renderManagers(){
       } else {
         slotHtml += `<div class="slot empty">${i+1}</div>`;
       }
+    }
+
+    let squadHtml = '';
+    if(soldPlayers.length){
+      squadHtml = `<div class="squad-list">${soldPlayers.map(p=>`
+        <div class="squad-item">
+          <span class="squad-item-name">${escapeHtml(p.name || 'Unnamed')}</span>
+          <span class="squad-item-price">${fmt(p.soldPrice)}</span>
+        </div>`).join('')}</div>`;
+    } else {
+      squadHtml = `<div class="squad-list"><span class="squad-empty">এখনো কোনো প্লেয়ার নেয়া হয়নি</span></div>`;
     }
 
     const initials = (m.name || '?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
@@ -638,6 +655,7 @@ function renderManagers(){
       <div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div>
       <div class="slots">${slotHtml}</div>
       <div class="manager-empty-note">${slots}/${MAX_SLOTS_PER_MANAGER} SLOT FILLED</div>
+      ${squadHtml}
     `;
     grid.appendChild(card);
   });
