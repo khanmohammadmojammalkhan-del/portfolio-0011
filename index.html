@@ -504,6 +504,7 @@ db.ref(`${ROOT}/managers`).on("value", snap => {
 db.ref(`${ROOT}/players`).on("value", snap => {
   players = snap.val() || {};
   renderPlayers();
+  renderManagers();
   renderTicker();
 });
 
