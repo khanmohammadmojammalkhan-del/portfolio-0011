@@ -533,9 +533,15 @@ function selectAllVisible(){
   renderPickList();
 }
 function clearAllSelection(){ selectedUids.clear(); renderPickList(); }
+function stripNumbering(n){
+  // "1. Name", "12) Name", "3 - Name", "4: Name" ইত্যাদি সামনের নাম্বারিং বাদ দেয়
+  return n.replace(/^\s*\d+\s*[\.\)\-:]\s*/, '').trim();
+}
 function matchNamesToPool(names, pool){
   let matched=0, notFound=[], ambiguous=[], hitUids=[];
-  names.forEach(n=>{
+  names.forEach(raw=>{
+    const n = stripNumbering(raw);
+    if (!n) return;
     const nLower = n.toLowerCase();
     let exact = pool.filter(p=>(p.name||'').toLowerCase().trim()===nLower);
     if (exact.length===1){ hitUids.push(exact[0].uid); matched++; return; }
