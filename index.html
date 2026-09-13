@@ -209,19 +209,25 @@ input[type=text], input[type=number], input[type=password]{
       <div class="setup-grid">
         <div>
           <label>💰 প্রতিটা Manager এর Fixed Budget (Coin)</label>
-          <input type="number" id="setupBudget" value="1000">
+          <input type="number" id="setupBudget" value="4000">
 
           <label>👔 12 জন Team / Manager এর তথ্য</label>
           <div class="manager-input-grid" id="managerInputs"></div>
         </div>
 
         <div>
-          <label>🔍 Player খুঁজো (নাম / ক্লাব / district)</label>
+          <label>📋 যাদের নাম বিড এ দেওয়া হয়েছে, এখানে Paste করো (এক লাইনে একটা নাম, বা কমা দিয়ে)</label>
+          <textarea id="bulkNamesInput" rows="4" placeholder="যেমন:&#10;Sarowar Ahmed Farhan&#10;Rafiq Islam&#10;..." style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;resize:vertical"></textarea>
+          <div class="action-row" style="margin-top:8px">
+            <button class="btn btn-gold" onclick="bulkSelectByNames()">📥 এই নামগুলো Select করো</button>
+          </div>
+          <div id="bulkMatchResult" style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.5"></div>
+
+          <label style="margin-top:16px">🔍 বা নিজে সার্চ করে বেছে নাও (নাম / ক্লাব / district)</label>
           <div class="search-row">
             <input type="text" id="playerSearch" placeholder="সার্চ করো..." oninput="renderPickList()">
             <button class="btn btn-sm" onclick="selectAllVisible()">সব Select</button>
             <button class="btn btn-sm" onclick="clearAllSelection()">Clear</button>
-            <button class="btn btn-sm btn-gold" onclick="autoSelectTop()">🎯 Top ১০৮ Auto</button>
           </div>
           <div class="pool-progress-wrap">
             <div class="pool-progress-label"><span>Selected</span><span><b id="selCount">0</b> / 108</span></div>
@@ -293,6 +299,9 @@ input[type=text], input[type=number], input[type=password]{
     <!-- Player Pool -->
     <div class="card">
       <h2>📋 Player Pool</h2>
+      <div class="admin-only hidden" style="margin-bottom:12px">
+        <button class="btn btn-sm btn-gold" onclick="openAddPlayersModal()">➕ আরও Player যোগ করো (Day 2 ইত্যাদি)</button>
+      </div>
       <div class="tabs">
         <div class="tab-btn active" data-f="all" onclick="setPoolFilter('all')">সবাই</div>
         <div class="tab-btn" data-f="available" onclick="setPoolFilter('available')">Available</div>
@@ -319,6 +328,29 @@ input[type=text], input[type=number], input[type=password]{
       <button class="btn" onclick="closeLoginModal()">Cancel</button>
     </div>
     <div class="err-msg" id="loginErr">❌ ভুল password।</div>
+  </div>
+</div>
+
+<!-- Add Players Modal (mid-auction, e.g. Day 2) -->
+<div class="modal-overlay" id="addPlayersModal">
+  <div class="modal-box" style="max-width:540px; max-height:88vh; overflow-y:auto;">
+    <h3>➕ Auction Pool এ আরও Player যোগ করো</h3>
+    <label>📋 নাম Paste করো (এক লাইনে একটা, বা কমা দিয়ে)</label>
+    <textarea id="addBulkNames" rows="3" placeholder="যেমন:&#10;Rafiq Islam&#10;..." style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;resize:vertical"></textarea>
+    <div class="action-row" style="margin-top:8px">
+      <button class="btn btn-sm btn-gold" onclick="addBulkSelectByNames()">📥 Match করো</button>
+    </div>
+    <div id="addBulkResult" style="font-size:12px;color:var(--text2);margin:6px 0;line-height:1.5"></div>
+
+    <label style="margin-top:12px">🔍 বা সার্চ করে বেছে নাও</label>
+    <input type="text" id="addPlayerSearch" placeholder="সার্চ করো..." oninput="renderAddPickList()">
+    <div class="counter" id="addSelCounter" style="margin:8px 0; color:var(--cyan); font-weight:700; font-size:13px;">Selected: 0</div>
+    <div class="player-pick-list" style="max-height:280px"><div class="pick-grid" id="addPickList"></div></div>
+
+    <div class="action-row" style="margin-top:14px">
+      <button class="btn btn-green" onclick="confirmAddPlayers()">✅ Pool এ যোগ করো</button>
+      <button class="btn" onclick="closeAddPlayersModal()">বাতিল</button>
+    </div>
   </div>
 </div>
 
@@ -501,11 +533,32 @@ function selectAllVisible(){
   renderPickList();
 }
 function clearAllSelection(){ selectedUids.clear(); renderPickList(); }
-function autoSelectTop(){
-  const sorted = [...allUsers].sort((a,b)=> scoreOf(b)-scoreOf(a));
-  selectedUids = new Set(sorted.slice(0,108).map(p=>p.uid));
+function matchNamesToPool(names, pool){
+  let matched=0, notFound=[], ambiguous=[], hitUids=[];
+  names.forEach(n=>{
+    const nLower = n.toLowerCase();
+    let exact = pool.filter(p=>(p.name||'').toLowerCase().trim()===nLower);
+    if (exact.length===1){ hitUids.push(exact[0].uid); matched++; return; }
+    if (exact.length>1){ ambiguous.push(n); return; }
+    let partial = pool.filter(p=>(p.name||'').toLowerCase().includes(nLower));
+    if (partial.length===1){ hitUids.push(partial[0].uid); matched++; return; }
+    if (partial.length>1){ ambiguous.push(n); return; }
+    notFound.push(n);
+  });
+  return { matched, notFound, ambiguous, hitUids };
+}
+function bulkSelectByNames(){
+  const raw = document.getElementById('bulkNamesInput').value;
+  const names = raw.split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
+  if (!names.length) return showToast('❌ কমপক্ষে একটা নাম লেখো');
+  const { matched, notFound, ambiguous, hitUids } = matchNamesToPool(names, allUsers);
+  hitUids.forEach(uid => selectedUids.add(uid));
   renderPickList();
-  showToast('🎯 Score অনুযায়ী Top ১০৮ জন select হয়েছে');
+  let msg = `✅ ${matched} জন match হয়ে select হয়েছে।`;
+  if (ambiguous.length) msg += `<br>⚠️ একের বেশি মিল পাওয়া গেছে (নিজে সার্চ করে বেছে নাও): ${ambiguous.join(', ')}`;
+  if (notFound.length) msg += `<br>❌ পাওয়া যায়নি: ${notFound.join(', ')}`;
+  document.getElementById('bulkMatchResult').innerHTML = msg;
+  showToast(`✅ ${matched} জন select হয়ে গেছে`);
 }
 
 async function loadAllUsersFromMainDB(){
@@ -554,10 +607,10 @@ async function startAuction(){
 async function pollState(){
   const data = await dbGet(BID_NODE);
   state = data;
+  if (!allUsers.length) await loadAllUsersFromMainDB();
   if (!state || !state.meta || !state.meta.started){
     document.getElementById('setupScreen').classList.remove('hidden');
     document.getElementById('auctionScreen').classList.add('hidden');
-    if (!allUsers.length) await loadAllUsersFromMainDB();
     buildManagerInputs();
     renderPickList();
   } else {
@@ -745,6 +798,70 @@ async function syncAllTeams(){
   showToast('🏆 সব Manager এর Team Auction Tournament এ sync হয়ে গেছে');
   await pollState();
 }
+
+// ---------- Add more players mid-auction (Day 2 etc.) ----------
+let addSelectedUids = new Set();
+function existingPoolUids(){ return new Set(Object.keys((state && state.players) || {})); }
+function openAddPlayersModal(){
+  addSelectedUids = new Set();
+  document.getElementById('addBulkNames').value = '';
+  document.getElementById('addBulkResult').innerHTML = '';
+  document.getElementById('addPlayerSearch').value = '';
+  renderAddPickList();
+  document.getElementById('addPlayersModal').classList.add('show');
+}
+function closeAddPlayersModal(){ document.getElementById('addPlayersModal').classList.remove('show'); }
+function renderAddPickList(){
+  const existing = existingPoolUids();
+  const q = (document.getElementById('addPlayerSearch').value||'').trim().toLowerCase();
+  const pool = allUsers.filter(p => !existing.has(p.uid));
+  const filtered = !q ? pool : pool.filter(p =>
+    (p.name||'').toLowerCase().includes(q) || (p.club||'').toLowerCase().includes(q) || (p.district||'').toLowerCase().includes(q));
+  document.getElementById('addPickList').innerHTML = filtered.map(p => `
+    <div class="pick-card ${addSelectedUids.has(p.uid)?'selected':''}" id="addcard_${p.uid}" onclick="toggleAddPick('${p.uid}')">
+      <div class="pick-check"></div>
+      <div class="pick-photo">${avatarHtml(p)}</div>
+      <div class="pick-info"><div class="pname">${p.name||'(নাম নেই)'}</div><div class="pmeta">${p.club || p.district || '&nbsp;'}</div></div>
+    </div>
+  `).join('') || '<div class="pick-empty-msg">সবাই already Pool এ আছে, অথবা কাউকে পাওয়া যায়নি।</div>';
+  document.getElementById('addSelCounter').textContent = `Selected: ${addSelectedUids.size}`;
+}
+function toggleAddPick(uid){
+  if (addSelectedUids.has(uid)) addSelectedUids.delete(uid); else addSelectedUids.add(uid);
+  const c = document.getElementById('addcard_'+uid);
+  if (c) c.classList.toggle('selected', addSelectedUids.has(uid));
+  document.getElementById('addSelCounter').textContent = `Selected: ${addSelectedUids.size}`;
+}
+function addBulkSelectByNames(){
+  const existing = existingPoolUids();
+  const raw = document.getElementById('addBulkNames').value;
+  const names = raw.split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
+  if (!names.length) return showToast('❌ কমপক্ষে একটা নাম লেখো');
+  const pool = allUsers.filter(p => !existing.has(p.uid));
+  const { matched, notFound, ambiguous, hitUids } = matchNamesToPool(names, pool);
+  hitUids.forEach(uid => addSelectedUids.add(uid));
+  renderAddPickList();
+  let msg = `✅ ${matched} জন match হয়েছে।`;
+  if (ambiguous.length) msg += `<br>⚠️ একের বেশি মিল: ${ambiguous.join(', ')}`;
+  if (notFound.length) msg += `<br>❌ পাওয়া যায়নি (অথবা আগেই pool এ আছে): ${notFound.join(', ')}`;
+  document.getElementById('addBulkResult').innerHTML = msg;
+}
+async function confirmAddPlayers(){
+  if (!addSelectedUids.size) return showToast('❌ কাউকে select করোনি');
+  const updates = {};
+  allUsers.filter(p => addSelectedUids.has(p.uid)).forEach(p => {
+    updates[p.uid] = {
+      name:p.name||'', avatarUrl:p.avatarUrl||'', club:p.club||'', district:p.district||'',
+      wins:p.wins||0, mvp:p.mvp||0, goalsFor:p.goalsFor||0, draws:p.draws||0,
+      status:'available'
+    };
+  });
+  await dbPatch(`${BID_NODE}/players`, updates);
+  showToast(`✅ ${addSelectedUids.size} জন player Pool এ যোগ হয়ে গেছে`);
+  closeAddPlayersModal();
+  await pollState();
+}
+
 async function markSold(){
   const lot = state.currentLot || {};
   if (!lot.uid || !lot.leadingManagerId) return showToast('❌ কোনো leading bid নেই');
