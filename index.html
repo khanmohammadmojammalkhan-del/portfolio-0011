@@ -366,9 +366,9 @@ input[type=text], input[type=number], input[type=password]{
       <div style="font-size:11px;color:var(--text3)">Logo বদলাতে ছবিতে ক্লিক করো</div>
     </div>
     <label>Team Name</label>
-    <input type="text" id="editTeamName">
+    <input type="text" id="editTeamName" onfocus="this.select()">
     <label>Manager Name</label>
-    <input type="text" id="editMgrName">
+    <input type="text" id="editMgrName" onfocus="this.select()">
     <div class="action-row">
       <button class="btn btn-gold" onclick="saveManagerEdit()">✅ Save করো</button>
       <button class="btn" onclick="closeEditManagerModal()">বাতিল</button>
@@ -837,6 +837,7 @@ function openEditManagerModal(mid){
     ? `<img src="${m.logo}" style="width:100%;height:100%;object-fit:cover"><input type="file" accept="image/*" onchange="handleEditLogoFile(this)">`
     : `🏟️<input type="file" accept="image/*" onchange="handleEditLogoFile(this)">`;
   document.getElementById('editMgrModal').classList.add('show');
+  setTimeout(()=>{ const el=document.getElementById('editTeamName'); el.focus(); el.select(); }, 50);
 }
 function closeEditManagerModal(){
   document.getElementById('editMgrModal').classList.remove('show');
