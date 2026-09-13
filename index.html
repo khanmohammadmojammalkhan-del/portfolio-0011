@@ -354,6 +354,28 @@ input[type=text], input[type=number], input[type=password]{
   </div>
 </div>
 
+<!-- Edit Manager/Team Modal -->
+<div class="modal-overlay" id="editMgrModal">
+  <div class="modal-box">
+    <h3>✏️ Team / Manager Edit করো</h3>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+      <div class="logo-box" id="editLogoBox" style="width:56px;height:56px">
+        🏟️
+        <input type="file" accept="image/*" onchange="handleEditLogoFile(this)">
+      </div>
+      <div style="font-size:11px;color:var(--text3)">Logo বদলাতে ছবিতে ক্লিক করো</div>
+    </div>
+    <label>Team Name</label>
+    <input type="text" id="editTeamName">
+    <label>Manager Name</label>
+    <input type="text" id="editMgrName">
+    <div class="action-row">
+      <button class="btn btn-gold" onclick="saveManagerEdit()">✅ Save করো</button>
+      <button class="btn" onclick="closeEditManagerModal()">বাতিল</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -680,7 +702,10 @@ function renderManagers(){
             ${m.logo?`<img src="${m.logo}" style="width:26px;height:26px;border-radius:6px;object-fit:cover;flex-shrink:0">`:''}
             <span>${m.teamName || m.name} ${synced?'<span title="Auction Tournament এ Team আছে" style="color:var(--cyan);font-size:11px">🏆</span>':''}</span>
           </span>
-          <span class="mgr-budget ${low?'low':''}">🪙 ${m.budget}</span>
+          <span style="display:flex;align-items:center;gap:8px">
+            <span class="mgr-budget ${low?'low':''}">🪙 ${m.budget}</span>
+            <button class="btn btn-sm admin-only ${isAdmin?'':'hidden'}" style="padding:4px 8px" onclick="openEditManagerModal('${mid}')" title="Edit Team/Manager">✏️</button>
+          </span>
         </div>
         <div style="font-size:11px;color:var(--text3);margin-top:1px">👔 ${m.name}</div>
         <div style="font-size:11px;color:${full?'var(--green)':'var(--text3)'};margin-top:2px">${full?'✅ Squad Full':`Squad: ${roster.length}/${SQUAD_SIZE}`}</div>
@@ -798,6 +823,63 @@ async function syncTeamForManager(mid, manual){
   }
   if (manual) showToast(`🏆 ${mgr.name} এর Team Auction Tournament এ sync হলো`);
 }
+// ---------- Edit manager/team mid-auction ----------
+let editingMid = null;
+let editLogoDataUrl = null;
+function openEditManagerModal(mid){
+  editingMid = mid;
+  editLogoDataUrl = null;
+  const m = state.managers[mid];
+  document.getElementById('editTeamName').value = m.teamName || '';
+  document.getElementById('editMgrName').value = m.name || '';
+  const box = document.getElementById('editLogoBox');
+  box.innerHTML = m.logo
+    ? `<img src="${m.logo}" style="width:100%;height:100%;object-fit:cover"><input type="file" accept="image/*" onchange="handleEditLogoFile(this)">`
+    : `🏟️<input type="file" accept="image/*" onchange="handleEditLogoFile(this)">`;
+  document.getElementById('editMgrModal').classList.add('show');
+}
+function closeEditManagerModal(){
+  document.getElementById('editMgrModal').classList.remove('show');
+  editingMid = null;
+}
+function handleEditLogoFile(input){
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 150;
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > MAX) { h = h*(MAX/w); w = MAX; } }
+      else { if (h > MAX) { w = w*(MAX/h); h = MAX; } }
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(w); canvas.height = Math.round(h);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      editLogoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      const box = document.getElementById('editLogoBox');
+      box.innerHTML = `<img src="${editLogoDataUrl}" style="width:100%;height:100%;object-fit:cover"><input type="file" accept="image/*" onchange="handleEditLogoFile(this)">`;
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+async function saveManagerEdit(){
+  if (!editingMid) return;
+  const mid = editingMid;
+  const teamName = document.getElementById('editTeamName').value.trim();
+  const name = document.getElementById('editMgrName').value.trim();
+  if (!teamName || !name) return showToast('❌ Team Name ও Manager Name খালি রাখা যাবে না');
+  const patch = { teamName, name };
+  if (editLogoDataUrl) patch.logo = editLogoDataUrl;
+  await dbPatch(`${BID_NODE}/managers/${mid}`, patch);
+  showToast('✅ Team/Manager info update হয়ে গেছে');
+  closeEditManagerModal();
+  await pollState();
+  await syncTeamForManager(mid, false); // tournament এ নামও update হয়ে যাবে
+  await pollState();
+}
+
 async function syncAllTeams(){
   const managers = state.managers || {};
   for (const mid of Object.keys(managers)) await syncTeamForManager(mid, false);
