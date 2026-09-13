@@ -66,7 +66,20 @@ input[type=text], input[type=number], input[type=password]{
   width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border);
   background:var(--bg3); color:var(--text); font-size:14px;
 }
-.manager-input-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.manager-input-grid{max-height:520px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding-right:4px;}
+.mgr-setup-card{
+  background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:10px 12px;
+  display:flex; gap:10px; align-items:center;
+}
+.mgr-setup-card .logo-box{
+  width:46px; height:46px; border-radius:10px; border:1.5px dashed var(--border);
+  background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:18px;
+  overflow:hidden; cursor:pointer; position:relative; flex-shrink:0;
+}
+.mgr-setup-card .logo-box input[type=file]{position:absolute; inset:0; opacity:0; cursor:pointer;}
+.mgr-setup-card .fields{flex:1; display:flex; flex-direction:column; gap:5px; min-width:0;}
+.mgr-setup-card input[type=text]{padding:6px 10px; font-size:12.5px;}
+.mgr-setup-card .fld-label{font-size:9.5px; color:var(--text3); margin:0 0 2px 2px;}
 .search-row{display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;}
 .search-row input{flex:1; min-width:160px;}
 
@@ -198,7 +211,7 @@ input[type=text], input[type=number], input[type=password]{
           <label>💰 প্রতিটা Manager এর Fixed Budget (Coin)</label>
           <input type="number" id="setupBudget" value="1000">
 
-          <label>👔 12 জন Manager এর নাম</label>
+          <label>👔 12 জন Team / Manager এর তথ্য</label>
           <div class="manager-input-grid" id="managerInputs"></div>
         </div>
 
@@ -262,6 +275,9 @@ input[type=text], input[type=number], input[type=password]{
           </div>
           <div class="action-row">
             <button class="btn btn-sm" onclick="undoLast()">↩️ Undo Last Sale</button>
+            <button class="btn btn-sm btn-cyan" onclick="syncAllTeams()">🏆 সব Manager Team Tournament এ Sync করো</button>
+          </div>
+          <div class="action-row">
             <button class="btn btn-sm" style="color:var(--red)" onclick="resetAuctionConfirm()">🔄 Reset পুরো Auction</button>
           </div>
         </div>
@@ -393,15 +409,55 @@ function applyAdminUI(){
 // ═══════════════════════════════════════════
 // SETUP SCREEN
 // ═══════════════════════════════════════════
+let managerLogos = {}; // i -> base64 dataURL, filled in as logos are uploaded during setup
 function buildManagerInputs(){
   const wrap = document.getElementById('managerInputs');
   wrap.innerHTML = '';
+  managerLogos = {};
   for (let i=1;i<=12;i++){
-    const inp = document.createElement('input');
-    inp.type='text'; inp.id=`mgrName${i}`; inp.value=`Manager ${i}`;
-    inp.placeholder=`Manager ${i} নাম`;
-    wrap.appendChild(inp);
+    const box = document.createElement('div');
+    box.className = 'mgr-setup-card';
+    box.innerHTML = `
+      <div class="logo-box" id="logoBox${i}">
+        🏟️
+        <input type="file" accept="image/*" onchange="handleLogoFile(this, ${i})">
+      </div>
+      <div class="fields">
+        <div>
+          <div class="fld-label">Team Name</div>
+          <input type="text" id="mgrTeamName${i}" value="Team ${i}" placeholder="Team ${i} নাম">
+        </div>
+        <div>
+          <div class="fld-label">Manager Name</div>
+          <input type="text" id="mgrName${i}" value="Manager ${i}" placeholder="Manager ${i} নাম">
+        </div>
+      </div>
+    `;
+    wrap.appendChild(box);
   }
+}
+function handleLogoFile(input, i){
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 150;
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > MAX) { h = h*(MAX/w); w = MAX; } }
+      else { if (h > MAX) { w = w*(MAX/h); h = MAX; } }
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(w); canvas.height = Math.round(h);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      managerLogos[i] = dataUrl;
+      const box = document.getElementById(`logoBox${i}`);
+      box.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover"><input type="file" accept="image/*" onchange="handleLogoFile(this, ${i})">`;
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 function renderPickList(){
   const q = document.getElementById('playerSearch').value.trim().toLowerCase();
@@ -467,7 +523,9 @@ async function startAuction(){
   const managers = {};
   for (let i=1;i<=12;i++){
     const name = document.getElementById(`mgrName${i}`).value.trim() || `Manager ${i}`;
-    managers[`m${i}`] = { name, budget, spent:0 };
+    const teamName = document.getElementById(`mgrTeamName${i}`).value.trim() || `Team ${i}`;
+    const logo = managerLogos[i] || '';
+    managers[`m${i}`] = { name, teamName, logo, budget, spent:0 };
   }
 
   const players = {};
@@ -554,14 +612,26 @@ function renderManagers(){
   wrap.innerHTML = Object.entries(managers).map(([mid,m])=>{
     const roster = Object.entries(players).filter(([,p])=> p.soldTo === mid);
     const low = m.budget < (state.meta.budget*0.15);
+    const synced = !!m.tournamentTeamId;
+    const full = roster.length >= SQUAD_SIZE;
     return `
       <div class="mgr-card">
         <div class="mgr-top">
-          <span class="mgr-name">${m.name}</span>
+          <span class="mgr-name" style="display:flex;align-items:center;gap:8px">
+            ${m.logo?`<img src="${m.logo}" style="width:26px;height:26px;border-radius:6px;object-fit:cover;flex-shrink:0">`:''}
+            <span>${m.teamName || m.name} ${synced?'<span title="Auction Tournament এ Team আছে" style="color:var(--cyan);font-size:11px">🏆</span>':''}</span>
+          </span>
           <span class="mgr-budget ${low?'low':''}">🪙 ${m.budget}</span>
         </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:1px">👔 ${m.name}</div>
+        <div style="font-size:11px;color:${full?'var(--green)':'var(--text3)'};margin-top:2px">${full?'✅ Squad Full':`Squad: ${roster.length}/${SQUAD_SIZE}`}</div>
         <div class="mgr-roster">
           ${roster.length ? roster.map(([uid,p])=>`<div class="roster-item"><span>${p.name}</span><span>${p.price}🪙</span></div>`).join('') : `<div style="opacity:.6">কোনো player কেনা হয়নি</div>`}
+        </div>
+        <div class="admin-only ${isAdmin?'':'hidden'}" style="margin-top:8px">
+          <button class="btn btn-sm" style="width:100%" onclick="syncTeamForManager('${mid}', true)" ${roster.length?'':'disabled'}>
+            🔁 Tournament এ ${synced?'Update':'Team তৈরি'} করো
+          </button>
         </div>
       </div>
     `;
@@ -577,12 +647,20 @@ function renderNextPlayerSelect(){
     available.map(([uid,p]) => `<option value="${uid}">${p.name} ${p.status==='unsold'?'(unsold)':''}</option>`).join('');
   if ([...sel.options].some(o=>o.value===cur)) sel.value = cur;
 }
+const SQUAD_SIZE = 9; // প্রতিটা manager এর team এ কতজন player থাকবে (manager সহ team size 10)
+function rosterCount(mid){
+  return Object.values(state.players || {}).filter(p => p.soldTo === mid).length;
+}
 function renderBidManagerSelect(){
   const sel = document.getElementById('bidManagerSelect');
   const managers = state.managers || {};
   const cur = sel.value;
   sel.innerHTML = `<option value="">-- Manager বাছাই করো --</option>` +
-    Object.entries(managers).map(([mid,m]) => `<option value="${mid}">${m.name} (🪙${m.budget})</option>`).join('');
+    Object.entries(managers).map(([mid,m]) => {
+      const count = rosterCount(mid);
+      const full = count >= SQUAD_SIZE;
+      return `<option value="${mid}" ${full?'disabled':''}>${m.teamName || m.name} — ${m.name} (🪙${m.budget}) — ${full?'✅ Squad Full (9/9)':`${count}/${SQUAD_SIZE}`}</option>`;
+    }).join('');
   if ([...sel.options].some(o=>o.value===cur)) sel.value = cur;
 }
 
@@ -629,8 +707,42 @@ async function placeBid(){
   if (!amount || amount <= (lot.amount||0)) return showToast('❌ আগের bid থেকে বেশি amount দাও');
   const mgr = state.managers[mid];
   if (amount > mgr.budget) return showToast(`❌ ${mgr.name} এর কাছে এত coin নেই`);
+  if (rosterCount(mid) >= SQUAD_SIZE) return showToast(`❌ ${mgr.name} এর squad ইতিমধ্যে ${SQUAD_SIZE} জন পূর্ণ`);
   await dbPatch(`${BID_NODE}/currentLot`, { amount, leadingManagerId: mid });
   document.getElementById('bidAmountInput').value = '';
+  await pollState();
+}
+async function syncTeamForManager(mid, manual){
+  const players = state.players || {};
+  const managers = state.managers || {};
+  const mgr = managers[mid];
+  if (!mgr) return;
+  const roster = Object.entries(players).filter(([,p]) => p.soldTo === mid)
+    .map(([uid,p], i) => ({ uid, name: p.name || '—', isStarter: i < 7 }));
+  if (!roster.length){
+    if (manual) showToast('❌ এই Manager এর এখনো কোনো player নেই');
+    return;
+  }
+  // group এখানে default 'A' রাখা হলো — auction শেষে main TYP site এ গিয়ে
+  // তোমরা নিজেরা group বাছাই করে fixture generate করবা।
+  const payload = {
+    name: mgr.teamName || mgr.name, manager: mgr.name, managerPassword: mgr.managerPassword || '',
+    emoji: '🏟️', group: mgr.group || 'A', players: roster,
+    updatedAt: new Date().toISOString()
+  };
+  if (mgr.logo) payload.logo = mgr.logo;
+  if (mgr.tournamentTeamId){
+    await dbPatch(`${DB}/tournament/teams/${mgr.tournamentTeamId}`, payload);
+  } else {
+    const res = await dbPush(`${DB}/tournament/teams`, payload);
+    if (res && res.name) await dbPatch(`${BID_NODE}/managers/${mid}`, { tournamentTeamId: res.name });
+  }
+  if (manual) showToast(`🏆 ${mgr.name} এর Team Auction Tournament এ sync হলো`);
+}
+async function syncAllTeams(){
+  const managers = state.managers || {};
+  for (const mid of Object.keys(managers)) await syncTeamForManager(mid, false);
+  showToast('🏆 সব Manager এর Team Auction Tournament এ sync হয়ে গেছে');
   await pollState();
 }
 async function markSold(){
@@ -639,6 +751,7 @@ async function markSold(){
   const uid = lot.uid, mid = lot.leadingManagerId, amount = lot.amount;
   const mgr = state.managers[mid];
   const player = state.players[uid];
+  if (rosterCount(mid) >= SQUAD_SIZE) return showToast(`❌ ${mgr.name} এর squad ইতিমধ্যে ${SQUAD_SIZE} জন পূর্ণ, আর কেনা যাবে না`);
 
   await dbPatch(`${BID_NODE}/players/${uid}`, { status:'sold', soldTo:mid, price:amount });
   await dbPatch(`${BID_NODE}/managers/${mid}`, { budget: mgr.budget - amount, spent: (mgr.spent||0) + amount });
@@ -646,6 +759,8 @@ async function markSold(){
   await dbPut(`${BID_NODE}/currentLot`, { uid:null, amount:0, leadingManagerId:null });
 
   showToast(`✅ ${player.name} বিক্রি হলো ${mgr.name} এর কাছে ${amount}🪙 তে`);
+  await pollState();
+  await syncTeamForManager(mid, false);   // auto-sync this manager's squad into Auction Tournament
   await pollState();
 }
 async function markUnsold(){
@@ -669,6 +784,8 @@ async function undoLast(){
   await dbDelete(`${BID_NODE}/history/${lastKey}`);
 
   showToast(`↩️ Undo হলো: ${entry.playerName}`);
+  await pollState();
+  await syncTeamForManager(entry.managerId, false);  // keep Auction Tournament roster in sync after undo
   await pollState();
 }
 async function resetAuctionConfirm(){
