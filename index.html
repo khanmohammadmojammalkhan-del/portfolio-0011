@@ -632,6 +632,7 @@ async function startAuction(){
 // ═══════════════════════════════════════════
 // AUCTION SCREEN
 // ═══════════════════════════════════════════
+let setupInputsBuilt = false;
 async function pollState(){
   const data = await dbGet(BID_NODE);
   state = data;
@@ -639,8 +640,11 @@ async function pollState(){
   if (!state || !state.meta || !state.meta.started){
     document.getElementById('setupScreen').classList.remove('hidden');
     document.getElementById('auctionScreen').classList.add('hidden');
-    buildManagerInputs();
-    renderPickList();
+    if (!setupInputsBuilt){
+      buildManagerInputs();
+      renderPickList();
+      setupInputsBuilt = true;
+    }
   } else {
     document.getElementById('setupScreen').classList.add('hidden');
     document.getElementById('auctionScreen').classList.remove('hidden');
@@ -997,6 +1001,7 @@ async function undoLast(){
 async function resetAuctionConfirm(){
   if (!confirm('পুরো auction reset করবে? সব data মুছে যাবে — আবার নতুন করে setup করতে হবে।')) return;
   await dbDelete(BID_NODE);
+  setupInputsBuilt = false;
   showToast('🔄 Auction reset হয়ে গেছে');
   await pollState();
 }
