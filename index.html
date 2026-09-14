@@ -738,12 +738,25 @@ function renderManagers(){
 function renderNextPlayerSelect(){
   const sel = document.getElementById('nextPlayerSelect');
   const q = (document.getElementById('nextPlayerSearch')?.value || '').trim().toLowerCase();
-  const players = state.players || {};
-  let available = Object.entries(players).filter(([,p]) => p.status !== 'sold');
-  if (q) available = available.filter(([,p]) => (p.name||'').toLowerCase().includes(q));
+  const poolPlayers = state.players || {};
   const cur = sel.value;
-  sel.innerHTML = `<option value="">-- Player বাছাই করো (${available.length}) --</option>` +
-    available.map(([uid,p]) => `<option value="${uid}">${p.name} ${p.status==='unsold'?'(unsold)':''}</option>`).join('');
+  let list;
+  if (!q){
+    // সার্চ ফাঁকা থাকলে শুধু pool এ যারা আছে ও এখনো sold হয়নি তাদেরই দেখাবে
+    list = Object.entries(poolPlayers).filter(([,p]) => p.status !== 'sold')
+      .map(([uid,p]) => ({ uid, name:p.name, tag: p.status==='unsold' ? '(unsold)' : '' }));
+  } else {
+    // সার্চ দিলে TYP এর সব ২৩৯ জনের মধ্যে থেকে খুঁজবে — pool এ থাকুক বা না থাকুক
+    list = [];
+    allUsers.forEach(p=>{
+      if (!(p.name||'').toLowerCase().includes(q)) return;
+      const poolP = poolPlayers[p.uid];
+      if (poolP && poolP.status === 'sold') return; // আগেই বিক্রি হয়ে গেছে এমন কাউকে দেখাবে না
+      list.push({ uid: p.uid, name: p.name, tag: !poolP ? '(নতুন)' : (poolP.status==='unsold'?'(unsold)':'') });
+    });
+  }
+  sel.innerHTML = `<option value="">-- Player বাছাই করো (${list.length}) --</option>` +
+    list.map(p => `<option value="${p.uid}">${p.name} ${p.tag}</option>`).join('');
   if ([...sel.options].some(o=>o.value===cur)) sel.value = cur;
 }
 const SQUAD_SIZE = 9; // প্রতিটা manager এর team এ কতজন player থাকবে (manager সহ team size 10)
@@ -794,7 +807,19 @@ function renderPool(){
 async function pickNextPlayer(){
   const uid = document.getElementById('nextPlayerSelect').value;
   if (!uid) return showToast('❌ আগে একজন player বাছাই করো');
+  if (!state.players || !state.players[uid]){
+    // এই player এখনো bid pool এ নেই — TYP এর মূল database থেকে টেনে এনে সাথে সাথে pool এ যোগ করে দিচ্ছি
+    const p = allUsers.find(u => u.uid === uid);
+    if (p){
+      await dbPatch(`${BID_NODE}/players/${uid}`, {
+        name:p.name||'', avatarUrl:p.avatarUrl||'', club:p.club||'', district:p.district||'',
+        wins:p.wins||0, mvp:p.mvp||0, goalsFor:p.goalsFor||0, draws:p.draws||0,
+        status:'available'
+      });
+    }
+  }
   await dbPut(`${BID_NODE}/currentLot`, { uid, amount:0, leadingManagerId:null });
+  showToast('✅ Player Auction এ তোলা হলো');
   await pollState();
 }
 async function placeBid(){
