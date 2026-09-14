@@ -228,6 +228,7 @@ input[type=text], input[type=number], input[type=password]{
             <input type="text" id="playerSearch" placeholder="সার্চ করো..." oninput="renderPickList()">
             <button class="btn btn-sm" onclick="selectAllVisible()">সব Select</button>
             <button class="btn btn-sm" onclick="clearAllSelection()">Clear</button>
+            <button class="btn btn-sm btn-cyan" onclick="refreshPlayerList()">🔄 Refresh</button>
           </div>
           <div class="pool-progress-wrap">
             <div class="pool-progress-label"><span>Selected</span><span><b id="selCount">0</b> / 108</span></div>
@@ -264,6 +265,7 @@ input[type=text], input[type=number], input[type=password]{
         <!-- Admin controls -->
         <div class="admin-controls admin-only hidden" id="adminLotControls">
           <label>➕ নতুন Player Auction এ তোলো</label>
+          <input type="text" id="nextPlayerSearch" placeholder="🔍 নাম লিখে খুঁজো..." oninput="renderNextPlayerSelect()" style="margin-bottom:8px">
           <select id="nextPlayerSelect"></select>
           <div class="action-row">
             <button class="btn btn-cyan btn-sm" onclick="pickNextPlayer()">তোলো Auction এ</button>
@@ -299,8 +301,9 @@ input[type=text], input[type=number], input[type=password]{
     <!-- Player Pool -->
     <div class="card">
       <h2>📋 Player Pool</h2>
-      <div class="admin-only hidden" style="margin-bottom:12px">
+      <div class="admin-only hidden" style="margin-bottom:12px; display:flex; gap:8px; flex-wrap:wrap;">
         <button class="btn btn-sm btn-gold" onclick="openAddPlayersModal()">➕ আরও Player যোগ করো (Day 2 ইত্যাদি)</button>
+        <button class="btn btn-sm btn-cyan" onclick="refreshPlayerList()">🔄 TYP Player List Refresh করো</button>
       </div>
       <div class="tabs">
         <div class="tab-btn active" data-f="all" onclick="setPoolFilter('all')">সবাই</div>
@@ -593,6 +596,12 @@ async function loadAllUsersFromMainDB(){
   const data = await dbGet(`${DB}/users`);
   allUsers = data ? Object.entries(data).map(([uid,v])=>({uid, ...v})) : [];
 }
+async function refreshPlayerList(){
+  await loadAllUsersFromMainDB();
+  showToast(`🔄 TYP এর মূল database থেকে refresh হলো — মোট ${allUsers.length} জন player পাওয়া গেছে`);
+  if (document.getElementById('addPlayersModal').classList.contains('show')) renderAddPickList();
+  if (!document.getElementById('setupScreen').classList.contains('hidden')) renderPickList();
+}
 
 async function startAuction(){
   const errEl = document.getElementById('setupErr');
@@ -728,10 +737,12 @@ function renderManagers(){
 
 function renderNextPlayerSelect(){
   const sel = document.getElementById('nextPlayerSelect');
+  const q = (document.getElementById('nextPlayerSearch')?.value || '').trim().toLowerCase();
   const players = state.players || {};
-  const available = Object.entries(players).filter(([,p]) => p.status !== 'sold');
+  let available = Object.entries(players).filter(([,p]) => p.status !== 'sold');
+  if (q) available = available.filter(([,p]) => (p.name||'').toLowerCase().includes(q));
   const cur = sel.value;
-  sel.innerHTML = `<option value="">-- Player বাছাই করো --</option>` +
+  sel.innerHTML = `<option value="">-- Player বাছাই করো (${available.length}) --</option>` +
     available.map(([uid,p]) => `<option value="${uid}">${p.name} ${p.status==='unsold'?'(unsold)':''}</option>`).join('');
   if ([...sel.options].some(o=>o.value===cur)) sel.value = cur;
 }
@@ -907,16 +918,18 @@ function closeAddPlayersModal(){ document.getElementById('addPlayersModal').clas
 function renderAddPickList(){
   const existing = existingPoolUids();
   const q = (document.getElementById('addPlayerSearch').value||'').trim().toLowerCase();
-  const pool = allUsers.filter(p => !existing.has(p.uid));
-  const filtered = !q ? pool : pool.filter(p =>
+  const filtered = !q ? allUsers : allUsers.filter(p =>
     (p.name||'').toLowerCase().includes(q) || (p.club||'').toLowerCase().includes(q) || (p.district||'').toLowerCase().includes(q));
-  document.getElementById('addPickList').innerHTML = filtered.map(p => `
-    <div class="pick-card ${addSelectedUids.has(p.uid)?'selected':''}" id="addcard_${p.uid}" onclick="toggleAddPick('${p.uid}')">
+  document.getElementById('addPickList').innerHTML = filtered.map(p => {
+    const already = existing.has(p.uid);
+    return `
+    <div class="pick-card ${addSelectedUids.has(p.uid)?'selected':''}" id="addcard_${p.uid}" onclick="toggleAddPick('${p.uid}')" style="position:relative">
       <div class="pick-check"></div>
       <div class="pick-photo">${avatarHtml(p)}</div>
       <div class="pick-info"><div class="pname">${p.name||'(নাম নেই)'}</div><div class="pmeta">${p.club || p.district || '&nbsp;'}</div></div>
+      ${already?'<div style="position:absolute;bottom:34px;left:0;right:0;text-align:center;font-size:9px;background:rgba(0,229,255,0.85);color:#012;padding:1px 0;">Pool এ আছে</div>':''}
     </div>
-  `).join('') || '<div class="pick-empty-msg">সবাই already Pool এ আছে, অথবা কাউকে পাওয়া যায়নি।</div>';
+  `;}).join('') || '<div class="pick-empty-msg">কাউকে পাওয়া যায়নি।</div>';
   document.getElementById('addSelCounter').textContent = `Selected: ${addSelectedUids.size}`;
 }
 function toggleAddPick(uid){
@@ -926,31 +939,33 @@ function toggleAddPick(uid){
   document.getElementById('addSelCounter').textContent = `Selected: ${addSelectedUids.size}`;
 }
 function addBulkSelectByNames(){
-  const existing = existingPoolUids();
   const raw = document.getElementById('addBulkNames').value;
   const names = raw.split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
   if (!names.length) return showToast('❌ কমপক্ষে একটা নাম লেখো');
-  const pool = allUsers.filter(p => !existing.has(p.uid));
-  const { matched, notFound, ambiguous, hitUids } = matchNamesToPool(names, pool);
+  const { matched, notFound, ambiguous, hitUids } = matchNamesToPool(names, allUsers);
   hitUids.forEach(uid => addSelectedUids.add(uid));
   renderAddPickList();
   let msg = `✅ ${matched} জন match হয়েছে।`;
   if (ambiguous.length) msg += `<br>⚠️ একের বেশি মিল: ${ambiguous.join(', ')}`;
-  if (notFound.length) msg += `<br>❌ পাওয়া যায়নি (অথবা আগেই pool এ আছে): ${notFound.join(', ')}`;
+  if (notFound.length) msg += `<br>❌ পাওয়া যায়নি: ${notFound.join(', ')}`;
   document.getElementById('addBulkResult').innerHTML = msg;
 }
 async function confirmAddPlayers(){
   if (!addSelectedUids.size) return showToast('❌ কাউকে select করোনি');
+  const existing = existingPoolUids();
   const updates = {};
+  let skipped = 0;
   allUsers.filter(p => addSelectedUids.has(p.uid)).forEach(p => {
+    if (existing.has(p.uid)) { skipped++; return; } // আগে থেকেই pool এ আছে — তার status/data touch করা হবে না
     updates[p.uid] = {
       name:p.name||'', avatarUrl:p.avatarUrl||'', club:p.club||'', district:p.district||'',
       wins:p.wins||0, mvp:p.mvp||0, goalsFor:p.goalsFor||0, draws:p.draws||0,
       status:'available'
     };
   });
-  await dbPatch(`${BID_NODE}/players`, updates);
-  showToast(`✅ ${addSelectedUids.size} জন player Pool এ যোগ হয়ে গেছে`);
+  const added = Object.keys(updates).length;
+  if (added) await dbPatch(`${BID_NODE}/players`, updates);
+  showToast(`✅ ${added} জন নতুন যোগ হলো${skipped?`, ${skipped} জন আগে থেকেই pool এ ছিল (touch করা হয়নি)`:''}`);
   closeAddPlayersModal();
   await pollState();
 }
