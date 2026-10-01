@@ -6190,18 +6190,55 @@ document.addEventListener('click', function(e) {
 // ── IMGBB UPLOAD ──
 const IMGBB_KEY = window.ACADEMY_CONFIG.imgbbKey;
 
-async function uploadToImgBB(file) {
-  const formData = new FormData();
-  formData.append('image', file);
-  console.log('ImgBB upload start, file size:', file.size, 'type:', file.type);
-  const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
-    method: 'POST',
-    body: formData
+// Resize + re-encode to JPEG (fixes odd camera formats/huge files that trigger ImgBB "Internal upload error")
+function _prepImageForUpload(file, maxDim = 1280, quality = 0.85) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        let w = img.naturalWidth, h = img.naturalHeight;
+        const scale = Math.min(1, maxDim / Math.max(w, h));
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        c.toBlob(b => resolve(b || file), 'image/jpeg', quality);
+      } catch (e) { URL.revokeObjectURL(url); resolve(file); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
   });
-  const data = await res.json();
-  console.log('ImgBB response:', JSON.stringify(data));
-  if (data.success) return data.data.url;
-  throw new Error('ImgBB upload failed: ' + (data.error?.message || JSON.stringify(data)));
+}
+
+async function _imgbbPost(body) {
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: 'POST', body });
+  let data = null;
+  try { data = await res.json(); } catch (_) {}
+  if (data && data.success) return data.data.display_url || data.data.url;
+  throw new Error((data && data.error && data.error.message) || ('HTTP ' + res.status));
+}
+
+async function uploadToImgBB(file) {
+  const blob = await _prepImageForUpload(file);
+  console.log('ImgBB upload start, original:', file.size, 'prepared:', blob.size);
+  let lastErr;
+  // Normal ImgBB file upload (multipart), retried up to 3 times
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const fd = new FormData();
+      fd.append('image', blob, 'photo.jpg');
+      return await _imgbbPost(fd);
+    } catch (e) {
+      lastErr = e;
+      console.warn('ImgBB attempt', attempt, 'failed:', e.message);
+      await new Promise(r => setTimeout(r, 700 * attempt));
+    }
+  }
+  throw new Error('ImgBB upload failed: ' + (lastErr ? lastErr.message : 'unknown') + ' (ImgBB server problem হতে পারে, একটু পরে আবার try করো)');
 }
 window.uploadToImgBB = uploadToImgBB; // expose to other (non-module) script blocks
 
