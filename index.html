@@ -1138,12 +1138,9 @@ select.form-input option { background: var(--card); color: var(--text); }
 .spk-row .nm{flex:1}
 .spk-tag{font-size:10.5px;font-weight:700;color:var(--text3);border:1px solid var(--border);border-radius:20px;padding:2px 8px}
 .spk-empty{padding:16px;text-align:center;font-size:13px;color:var(--text3)}
-/* Solo Tournament admin: PC only */
-.pc-only-note{display:none}
+/* Fixed Group box: PC only (hidden on mobile/touch) */
 @media (pointer: coarse), (max-width: 820px) {
-  .pc-only-admin{display:none !important}
-  #adminTab-solotourney > *{display:none !important}
-  #adminTab-solotourney > .pc-only-note{display:block !important;padding:22px 18px;text-align:center;font-size:14px;font-weight:700;color:var(--text3);border:1px dashed var(--border);border-radius:12px}
+  .pc-only-fixed{display:none !important}
 }
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -2914,7 +2911,7 @@ if (document.readyState === 'loading') {
     <!-- Header -->
     <div style="text-align:center;padding:40px 20px 32px;border-bottom:1px solid var(--border);margin-bottom:28px">
       <div style="display:inline-block;background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-family:'Libre Caslon Text',sans-serif;font-size:11px;letter-spacing:0.2em;padding:4px 14px;border-radius:20px;margin-bottom:16px;font-weight:600">OFFICIAL DOCUMENT</div>
-      <h1 style="font-family:'Playfair Display',serif;font-size:clamp(1.6rem,5vw,2.8rem);color:var(--primary);line-height:1.6;margin-bottom:10px">TYP AUCTION<br>TOURNAMENT</h1>
+      <h1 style="font-family:'Playfair Display',serif;font-size:clamp(1.6rem,5vw,2.8rem);color:var(--primary);line-height:1.6;margin-bottom:10px">🏆 TYP<br>ACTUALLY</h1>
       <p style="font-family:'Libre Caslon Text',sans-serif;font-size:13px;letter-spacing:0.3em;color:var(--text3);font-weight:600">RULES &amp; REGULATIONS</p>
     </div>
 
@@ -2924,321 +2921,146 @@ if (document.readyState === 'loading') {
     <div class="rules-section" id="rs0">
       <div class="rules-header" onclick="toggleRule(this)">
         <span style="font-size:1.2rem">🎮</span>
-        <span class="rules-title">TYP Room Create Rules</span>
+        <span class="rules-title">Match Settings</span>
         <span class="rules-toggle">▼</span>
       </div>
       <div class="rules-body">
-        <div class="rule-row">Match Type: <span class="rh">Standard</span></div>
-        <div class="rule-row">Match Time: <span class="rh">8 Minutes</span></div>
-        <div class="rule-row">Injury Time: <span class="rh">ON</span></div>
-        <div class="rule-row">Penalty: <span class="rh">OFF</span></div>
-        <div class="rule-row">Extra Time: <span class="rh">OFF</span></div>
-        <div class="rule-row">Substitutions: <span class="rh">5/5</span></div>
-        <div class="rule-row">Player Condition: <span class="rh">Normal</span></div>
-        <div class="rule-row">Smart Assist: <span class="rh">OFF</span></div>
+        <div class="rule-row">⏱️ Match Time: <span class="rh">8 Minutes</span></div>
+        <div class="rule-row">🔄 SUB: <span class="rh">৬ জন</span></div>
+        <div class="rule-row">🩹 Injury: <span class="rh">ON</span></div>
+        <div class="rule-row">🥅 Penalty: <span class="rh">OFF</span></div>
+        <div class="rule-row">⏰ Extra Time: <span class="rh">OFF</span></div>
+        <div class="rule-row">🟢 Condition: <span class="rh">Excellent</span></div>
+        <div class="rule-row">⚙️ Smart Assist: <span class="rh">OFF</span></div>
       </div>
     </div>
 
     <!-- 1 -->
     <div class="rules-section" id="rs1">
       <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">📋</span>
-        <span class="rules-title">Squad Line-up Submission</span>
+        <span style="font-size:1.2rem">⚔️</span>
+        <span class="rules-title">1. Group Stage Match &amp; Deadline</span>
         <span class="rules-toggle">▼</span>
       </div>
       <div class="rules-body">
-        <div class="rule-row"><span class="rl rl-gold">A</span> প্রত্যেক Match Day-এর জন্য Squad Line-up ম্যাচের দিন দুপুর <span class="rh">৩:০০ টার আগে</span> Admin-এর Inbox-এ জমা দিতে হবে।</div>
-        <div class="rule-row"><span class="rl rl-yellow">B</span> Line-up জমা দেওয়ার দায়িত্ব সংশ্লিষ্ট <strong>Team Manager অথবা Captain</strong>-এর।</div>
-        <div class="rule-row"><span class="rl rl-red">C</span> <strong style="color:var(--red)">Line-up জমা দিতে ব্যর্থ হলে:</strong> দুপুর ৩:০০ টার মধ্যে জমা দিতে ব্যর্থ হলে আগের Match Day-এর Line-up স্বয়ংক্রিয়ভাবে কার্যকর বলে গণ্য হবে এবং উক্ত Line-up ব্যবহার করে Official Draw সম্পন্ন করা হবে। পরবর্তীতে কোনো আপত্তি গ্রহণযোগ্য হবে না।</div>
+        <div class="rule-row">📌 প্রতিটি গ্রুপে <span class="rh">৪ জন</span> করে প্লেয়ার থাকবে।</div>
+        <div class="rule-row">🔄 একজন প্লেয়ার গ্রুপের বাকি ৩ জনের সাথে <span class="rh">১টি করে ম্যাচ</span> খেলবে (সব মিলিয়ে ১ জনের মোট ৩টি ম্যাচ)।</div>
+        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📊 Point System</strong></div>
+        <div class="rule-row"><span class="rl rl-green">W</span> Win (জয়) = <span class="rh">৩ পয়েন্ট</span> 🏆</div>
+        <div class="rule-row"><span class="rl rl-yellow">D</span> Draw (ড্র) = <span class="rh">১ পয়েন্ট</span> 🤝</div>
+        <div class="rule-row"><span class="rl rl-red">L</span> Loss (পরাজয়) = <span class="rh">০ পয়েন্ট</span> ❌</div>
+        <div class="rule-row">⏳ <strong>DEADLINE:</strong> পরবর্তী বিজ্ঞপ্তিতে ঘোষণা করা হবে।</div>
+        <div class="rule-row">📸 জয়ী অথবা ড্র হওয়া ম্যাচের পর Match Result-এর <span class="rh">Screenshot</span> অবশ্যই রাখতে হবে।</div>
       </div>
     </div>
 
     <!-- 2 -->
     <div class="rules-section collapsed" id="rs2">
       <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">🔄</span>
-        <span class="rules-title">Substitution &amp; Swap Rules</span>
+        <span style="font-size:1.2rem">🟥</span>
+        <span class="rules-title">2. In-Game Red Card Rule</span>
         <span class="rules-toggle">▼</span>
       </div>
       <div class="rules-body">
-        <div class="rule-row" style="margin-bottom:6px">প্রত্যেক Match Day-এ খেলোয়াড়দের উপস্থিতি, Substitution এবং Swap নির্ধারিত <span class="rh">Main Deadline</span>-এর পূর্বে সম্পন্ন করতে হবে।</div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 Substitution &amp; Swap Deadline</strong></div>
-        <div class="rule-row">Main Deadline-এর <span class="rh">১০ মিনিট আগে</span> Substitution ও Swap-এর Deadline শেষ হবে।</div>
-        <div class="rule-row" style="background:rgba(156,47,76,0.06);border-left:3px solid var(--primary);border-radius:6px;padding:10px 14px">
-          <strong style="color:var(--primary)">📝 উদাহরণ:</strong> Main Deadline: <span class="rh">12:00 AM</span> হলে Sub/Swap Deadline: <span class="rh">11:49:59 PM</span>।
-        </div>
-        <div class="rule-row"><span class="rl rl-red">⛔</span> নির্ধারিত Substitution/Swap Deadline অতিক্রম করার পর কোনো Substitution বা Swap গ্রহণযোগ্য হবে না। সকল Manager এবং Captain-কে নির্ধারিত সময়সীমা মেনে চলতে হবে।</div>
+        <div class="rule-row">🟥 Red Card পাওয়ার পর ইচ্ছাকৃতভাবে ম্যাচ থেকে বের হলে, প্রমাণসহ অভিযোগ প্রমাণিত হলে <span class="rh">১টি Yellow Card 🟨</span> পাবে।</div>
+        <div class="rule-row">🔄 নতুন ম্যাচ হবে এবং <span class="rh">Opponent ১ গোল লিডে</span> থাকবে।</div>
       </div>
     </div>
 
     <!-- 3 -->
     <div class="rules-section collapsed" id="rs3">
       <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">🃏</span>
-        <span class="rules-title">Substitution &amp; Swap Card Rules</span>
+        <span style="font-size:1.2rem">⚡</span>
+        <span class="rules-title">3. Auto Win &amp; Activity Rule</span>
         <span class="rules-toggle">▼</span>
       </div>
       <div class="rules-body">
-        <div class="rule-row">প্রত্যেক Team-এর কাছে প্রত্যেক Match Day-তে থাকবে: <span class="rh">🔄 ২টি Swap Card</span> ও <span class="rh">🔁 ২টি Substitution Card</span>।</div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 Card Usage Rules</strong></div>
-        <div class="rule-row">Swap করার জন্য অবশ্যই <span class="rh">"Typ: Swap Card"</span> এবং Substitution করার জন্য অবশ্যই <span class="rh">"Typ: Sub Card"</span> ব্যবহার করতে হবে। নির্ধারিত TYP Card ব্যবহার না করে করা কোনো Swap বা Substitution গ্রহণযোগ্য হবে না।</div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 Card Cancellation Rules</strong></div>
-        <div class="rule-row">Card ব্যবহারের সময় থেকে সর্বোচ্চ <span class="rh">৩ মিনিটের মধ্যে</span> Cancel Request জানাতে হবে — তাহলে Card Usage বাতিল বলে গণ্য হবে এবং Card পুনরায় ব্যবহারযোগ্য থাকবে।</div>
-        <div class="rule-row"><span class="rl rl-red">⛔</span> ৩ মিনিট অতিক্রম করার পর আর কোনো অবস্থাতেই Card Usage Cancel করা যাবে না — Swap/Substitution চূড়ান্ত (Final) বলে গণ্য হবে।</div>
+        <div class="rule-row">📌 সারাদিন Opponent-কে Mention/Message করে ম্যাচ খেলার চেষ্টা করলেও Opponent না এলে <span class="rh">Activity প্রমাণ</span> হিসেবে গণ্য হবে।</div>
+        <div class="rule-row">⏰ গ্রুপে কে কতক্ষণ Active ছিল এবং সারাদিন Opponent-কে কিরকম Mention/Message দিয়েছে, Admin সবকিছু বিবেচনা করে Active Player-কে <span class="rh">AUTO WIN</span> প্রদান করবেন।</div>
+        <div class="rule-row">📸 প্রয়োজনে Mention/Message-এর Screenshot দিতে হবে।</div>
       </div>
     </div>
 
     <!-- 4 -->
     <div class="rules-section collapsed" id="rs4">
       <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">⚠️</span>
-        <span class="rules-title">Manager Conduct &amp; Penalty Rules</span>
+        <span style="font-size:1.2rem">🚫</span>
+        <span class="rules-title">4. Double Defence Rule</span>
         <span class="rules-toggle">▼</span>
       </div>
       <div class="rules-body">
-        <div class="rule-row">সকল Team Manager-কে খেলোয়াড় ও দল সদস্যদের সাথে সম্মানজনক আচরণ করতে হবে।</div>
-        <div class="rule-row">কোনো Manager যদি তার দলের কোনো Player-এর সাথে অসদাচরণ, অপমানজনক ভাষা বা অশোভন আচরণ করে এবং এ বিষয়ে Admin-এর কাছে প্রমাণসহ অভিযোগ জমা পড়ে, তাহলে বিষয়টি তদন্ত করা হবে।</div>
-        <div class="rule-row"><span class="rl rl-yellow">৳</span> অভিযোগ সত্য প্রমাণিত হলে সংশ্লিষ্ট Manager-এর বিরুদ্ধে <span style="color:var(--yellow);font-weight:600">২০ টাকা জরিমানা</span> আরোপ করা হবে।</div>
-        <div class="rule-row">গুরুতর বা পুনরাবৃত্ত অসদাচরণের ক্ষেত্রে Tournament Authority অতিরিক্ত শাস্তিমূলক ব্যবস্থা গ্রহণের অধিকার সংরক্ষণ করবে। <strong style="color:var(--red)">Tournament Authority-এর সিদ্ধান্তই চূড়ান্ত।</strong></div>
+        <div class="rule-row">❌ ম্যাচে <strong style="color:var(--red)">Double Defence সম্পূর্ণ নিষিদ্ধ।</strong></div>
+        <div class="rule-row">⚠️ স্কোর ২–১ থাকা অবস্থায় Double Defence-এর প্রমাণ দিতে পারলে আপনার স্কোর থেকে <span class="rh">১ গোল মাইনাস</span> হবে।</div>
+        <div class="rule-row">➡️ ২–১ → <span class="rh">১–১</span> গণনা হবে।</div>
       </div>
     </div>
 
     <!-- 5 -->
     <div class="rules-section collapsed" id="rs5">
       <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">🚫</span>
-        <span class="rules-title">Match Fixing &amp; Disciplinary Action</span>
+        <span style="font-size:1.2rem">🌐</span>
+        <span class="rules-title">5. Net Disconnect &amp; Black Screen Rule</span>
         <span class="rules-toggle">▼</span>
       </div>
       <div class="rules-body">
-        <div class="rule-row"><strong style="color:var(--red)">Tournament-এ Match Fixing সম্পূর্ণরূপে নিষিদ্ধ।</strong> কোনো Manager Match Fixing করার চেষ্টা করলে বা জড়িত থাকার প্রমাণ পাওয়া গেলে সরাসরি <span style="color:var(--red);font-weight:600">Red Card</span> প্রদান করা হবে।</div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 Mutual Match Fixing</strong></div>
-        <div class="rule-row">উভয় দলের Manager পারস্পরিক সমঝোতায় Match Fixing করলে: <span class="rh">❌ ম্যাচ ০-০ Null Result</span>, <span class="rh">🟥 উভয় Manager-কে Red Card</span> এবং <span style="color:var(--red);font-weight:600">🚫 TYP Group থেকে ১ মাসের জন্য Ban</span>।</div>
-        <div class="rule-row">Tournament Authority প্রয়োজনে অতিরিক্ত শাস্তিমূলক ব্যবস্থা নিতে পারবে। সকল সিদ্ধান্ত তদন্তের ভিত্তিতে নেওয়া হবে এবং চূড়ান্ত বলে গণ্য হবে।</div>
+        <div class="rule-row">📱 খেলার মধ্যে কারো Net সমস্যা বা Black Screen হলে অবশ্যই <span class="rh">১০ সেকেন্ডের ভিডিও প্রমাণ</span> দিতে হবে।</div>
+        <div class="rule-row"><span class="rl rl-green">✓</span> <strong>ভিডিও প্রমাণ দিতে পারলে:</strong> ম্যাচ যে মিনিটে ডিসকানেক্ট হয়েছে, অবশিষ্ট সময়টুকু আগের স্কোর বজায় রেখেই (যেমন: ৩–১ থাকলে সেই ৩–১ থেকেই) নতুন ম্যাচে বাকি সময় খেলা হবে।</div>
+        <div class="rule-row"><span class="rl rl-red">⚠️</span> <strong style="color:var(--red)">ভিডিও প্রমাণ না দিতে পারলে / কোনো উপযুক্ত কারণ না থাকলে:</strong> শাস্তি হিসেবে Opponent ১ গোল লিডে থেকে বাকি ম্যাচ শেষ করবে।</div>
       </div>
     </div>
 
     <!-- 6 -->
     <div class="rules-section collapsed" id="rs6">
       <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">🚫</span>
-        <span class="rules-title">Proxy Player Rules</span>
+        <span style="font-size:1.2rem">📩</span>
+        <span class="rules-title">6. Match Submission Rule</span>
         <span class="rules-toggle">▼</span>
       </div>
       <div class="rules-body">
-        <div class="rule-row"><strong style="color:var(--red)">Tournament চলাকালীন কোনো Player-এর পরিবর্তে অন্য কোনো ব্যক্তি Proxy হিসেবে ম্যাচ খেললে তা সম্পূর্ণরূপে নিষিদ্ধ।</strong></div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 Proxy Player ধরা পড়লে</strong></div>
-        <div class="rule-row">কোনো Player Proxy ব্যবহার করেছে বলে Official Review-এর মাধ্যমে প্রমাণিত হলে সংশ্লিষ্ট Player-কে <span style="color:var(--red);font-weight:600">🚫 TYP Community থেকে Permanent Ban</span> করা হবে।</div>
-        <div class="rule-row">Permanent Ban-এর পর সংশ্লিষ্ট Player ভবিষ্যতে TYP Community-এর কোনো Tournament বা কার্যক্রমে অংশগ্রহণ করতে পারবে না।</div>
-        <div class="rule-row"><span class="rl rl-red">★</span> Proxy সংক্রান্ত সকল অভিযোগ প্রমাণ ও Official Review-এর ভিত্তিতে যাচাই করা হবে। Tournament Authority-এর সিদ্ধান্তই চূড়ান্ত।</div>
+        <div class="rule-row">⚠️ সবার দৃষ্টি আকর্ষণ করছি: ম্যাচ রেজাল্ট বা স্ক্রিনশট <strong style="color:var(--red)">ভুল করেও গ্রুপে দেবেন না!</strong></div>
+        <div class="rule-row">✅ ম্যাচ শেষ করার পর অবশ্যই <span class="rh">Result Edit</span> করে সরাসরি <span class="rh">Admin-এর Inbox-এ</span> পাঠাতে হবে।</div>
+        <div class="rule-row">⚠️ ভুলবশত গ্রুপে রেজাল্ট দেওয়া বা রেজাল্ট জমা না দেওয়ার কারণে ম্যাচ Count না হলে Admin পক্ষ কোনোভাবেই দায়ী থাকবে না।</div>
       </div>
     </div>
 
     <!-- 7 -->
     <div class="rules-section collapsed" id="rs7">
       <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">📲</span>
-        <span class="rules-title">Communication, User ID &amp; Device Change</span>
+        <span style="font-size:1.2rem">🤬</span>
+        <span class="rules-title">7. Behavior &amp; Penalty Rule</span>
         <span class="rules-toggle">▼</span>
       </div>
       <div class="rules-body">
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 Admin Communication</strong></div>
-        <div class="rule-row">Match Day চলাকালীন যেকোনো সমস্যা বা গুরুত্বপূর্ণ বিষয় Match Day Group-এ Admin-কে Mention করে জানাতে হবে। সিদ্ধান্তের আগে Admin-এর নির্দেশনার জন্য অপেক্ষা করতে হবে। Admin Active না থাকলে সরাসরি Admin-এর Inbox-এ যোগাযোগ করতে হবে।</div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 User ID Information Change</strong></div>
-        <div class="rule-row">User ID পরিবর্তনের প্রয়োজন হলে বিকাল <span class="rh">৫:০০ টার মধ্যে</span> নতুন User ID Submit করতে হবে। নির্ধারিত সময়ের পরে আবেদন গ্রহণযোগ্য হবে না, যদি না Tournament Authority বিশেষ অনুমতি দেয়।</div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 Device Change Rules</strong></div>
-        <div class="rule-row">Running Tournament চলাকালীন কোনো Player নিজের Device পরিবর্তন করতে পারবে না। Tournament শুরুতে জমা দেওয়া Device Information-ই শেষ পর্যন্ত বৈধ বলে গণ্য হবে।</div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 Emergency Device Change</strong></div>
-        <div class="rule-row">Device নষ্ট/হারিয়ে গেলে বা বাস্তব সমস্যা হলে Admin-কে অবিলম্বে জানিয়ে প্রমাণ জমা দিতে হবে। Admin যাচাই করে অনুমতি দিলেই Device Change করা যাবে। অনুমতি ছাড়া Device Change করলে তা <span style="color:var(--red);font-weight:600">❌ Rule Violation</span> হিসেবে গণ্য হবে।</div>
-        <div class="rule-row"><span class="rl rl-red">★</span> User ID ও Device Change সংক্রান্ত সকল বিষয়ে Tournament Authority-এর সিদ্ধান্তই চূড়ান্ত।</div>
+        <div class="rule-row">⚠️ ম্যাচ চলাকালীন বা গ্রুপে কোনো ধরনের ঝামেলা, গালিগালাজ বা খারাপ আচরণ করা <strong style="color:var(--red)">সম্পূর্ণ নিষিদ্ধ!</strong></div>
+        <div class="rule-row">🗣️ কারো বিরুদ্ধে খারাপ ভাষার বা কোনো ঝামেলা সৃষ্টির অভিযোগ প্রমাণিত হলে সরাসরি <span class="rh">১টি Yellow Card 🟨</span> দেওয়া হবে।</div>
+        <div class="rule-row"><span class="rl rl-red">⛔</span> মোট <span class="rh">২টি Yellow Card 🟨🟨</span> পেলে প্লেয়ারকে টুর্নামেন্ট থেকে সরাসরি <strong style="color:var(--red)">BAN 🚫</strong> করা হবে!</div>
       </div>
     </div>
 
     <!-- 8 -->
     <div class="rules-section collapsed" id="rs8">
       <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">🎬</span>
-        <span class="rules-title">Match Result Video Rules</span>
+        <span style="font-size:1.2rem">⚙️</span>
+        <span class="rules-title">8. Smart Assist Rule &amp; Penalty</span>
         <span class="rules-toggle">▼</span>
       </div>
       <div class="rules-body">
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">🏅 Win / 🤝 Draw Match</strong></div>
-        <div class="rule-row">বিজয়ী/ড্র উভয় Player-কে ভিডিওতে অবশ্যই দেখাতে হবে: <span class="rh">✅ Match Result</span>, <span class="rh">✅ SMART Assist OFF</span>, <span class="rh">✅ User ID</span>, <span class="rh">✅ Device Name</span>। ভিডিও Match Day Group-এ জমা দিতে হবে।</div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 Black Screen / Loading Issue</strong></div>
-        <div class="rule-row">এই সমস্যায় Match Result দেখা না গেলে সেই অবস্থা থেকেই Recording শুরু করতে হবে এবং বের হয়ে <span class="rh">✅ SMART Assist OFF</span>, <span class="rh">✅ Device Name</span>, <span class="rh">✅ User ID</span>, <span class="rh">✅ Match History</span> দেখাতে হবে।</div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 Video Submission Time</strong></div>
-        <div class="rule-row">ম্যাচ শেষের <span class="rh">১৫ মিনিটের মধ্যে</span> ভিডিও জমা দিতে হবে। Network সমস্যায় Sending অবস্থার Screenshot দিতে হবে।</div>
-        <div class="rule-row"><span class="rl rl-red">⛔</span> Video Submit করতে ব্যর্থ হলে — Win Match: Winning Player-কে <span style="color:var(--red);font-weight:600">Rematch</span> খেলতে হবে। Draw Match: Opponent <span class="rh">১ গোল লিড</span> নিয়ে Rematch খেলবে। কোনো অজুহাত গ্রহণযোগ্য নয়।</div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 Video Submission Rule — Invalid/Incomplete Video</strong></div>
-        <div class="rule-row">যদি কোনো Player অসম্পূর্ণ (Incomplete) বা ভুল ভিডিও Submit করে — অর্থাৎ ভিডিওতে ম্যাচ Verify করার জন্য প্রয়োজনীয় অংশ সম্পূর্ণভাবে না থাকে — তাহলে সেই ভিডিও <span style="color:var(--red);font-weight:600">❌ Invalid</span> হিসেবে গণ্য হবে। এরপর সিদ্ধান্ত হবে:</div>
-        <div class="rule-row">• যদি ওই Player <span class="rh">Winning Position</span>-এ থাকে, তাহলে ম্যাচটি <span class="rh">Replay (Re-Match)</span> করতে হবে।</div>
-        <div class="rule-row">• যদি ম্যাচটি <span class="rh">Draw Position</span>-এ থাকে, তাহলে Opponent-কে <span class="rh">১ গোল লিড</span> দিয়ে Replay (Re-Match) খেলতে হবে।</div>
-        <div class="rule-row">সকল Player-এর দায়িত্ব সম্পূর্ণ ও পরিষ্কার Video Record করে Submit করা। ভুল বা অসম্পূর্ণ ভিডিওর দায়ভার সম্পূর্ণভাবে সংশ্লিষ্ট Player-এর।</div>
+        <div class="rule-row">❌ ম্যাচে <strong style="color:var(--red)">Smart Assist ON রেখে খেলা সম্পূর্ণ নিষিদ্ধ!</strong></div>
+        <div class="rule-row">📹 ভিডিও ক্লিপে কারো Smart Assist ON থাকার প্রমাণ পাওয়া গেলে, অথবা ক্লেইম করার পর যদি প্লেয়ার উপযুক্ত ভিডিও প্রমাণ দিতে না পারে, তবে তার বিরুদ্ধে অ্যাকশন নেওয়া হবে:</div>
+        <div class="rule-row">🟨 অপরাধ প্রমাণিত হলে বা ভিডিও প্রমাণ দিতে ব্যর্থ হলে প্লেয়ারকে <span class="rh">১টি Yellow Card</span> দেওয়া হবে।</div>
+        <div class="rule-row">⚽ যদি উক্ত প্লেয়ার ম্যাচে জয়ীও হয়ে থাকে, তবে শাস্তি হিসেবে Opponent-কে <span class="rh">১ গোল লিড (১–০)</span> দিয়ে পুনরায় নতুন করে ম্যাচ খেলতে হবে।</div>
       </div>
     </div>
 
     <!-- 9 -->
     <div class="rules-section collapsed" id="rs9">
       <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">📡</span>
-        <span class="rules-title">Match Exit / Disconnect Rules</span>
+        <span style="font-size:1.2rem">💬</span>
+        <span class="rules-title">Help &amp; Support</span>
         <span class="rules-toggle">▼</span>
       </div>
       <div class="rules-body">
-        <div class="rule-row">ম্যাচ শেষ হওয়ার আগে Exit করলে শুধুমাত্র Exit করা Player-কে Video Proof দিতে হবে — দেখাতে হবে: <span class="rh">✅ সমস্যার প্রমাণ</span>, <span class="rh">✅ কেন Exit করেছে</span>, <span class="rh">✅ SMART Assist OFF</span>, <span class="rh">✅ Device Name</span>, <span class="rh">✅ User ID</span>।</div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 প্রমাণ দিতে না পারলে</strong></div>
-        <div class="rule-row">📈 Lead অবস্থায় Exit: <span class="rh">0-0 থেকে Rematch</span> + 🟨 ১টি Yellow Card।</div>
-        <div class="rule-row">🤝 Draw অবস্থায় Exit: Opponent <span class="rh">১ গোল লিড</span> নিয়ে Rematch + 🟨 ১টি Yellow Card।</div>
-        <div class="rule-row">📉 Opponent Lead অবস্থায় Exit: শুধুমাত্র 🟨 ১টি Yellow Card, বাকি সময় থেকে ম্যাচ সম্পন্ন করতে হবে।</div>
-        <div class="rule-row">🚪 যাকে Winner দেখাবে সে-ই Room Create করবে এবং তাকে Video দিতে হবে না — শুধু <span class="rh">Winner Result-এর Screenshot</span> দিলেই যথেষ্ট।</div>
-        <div class="rule-row">গেমের Technical সমস্যায় বের করে দিলে সেটিও Video-তে স্পষ্টভাবে দেখাতে হবে।</div>
-        <div class="rule-row"><span class="rl rl-red">⛔</span> সঠিক প্রমাণ দিতে ব্যর্থ হলে Opponent <span class="rh">১ গোল লিড</span> নিয়ে বাকি সময় থেকে ম্যাচ সম্পন্ন করবে।</div>
-        <div class="rule-row">⏱️ সকল Disconnect Match, Resume Match ও Rematch সর্বোচ্চ <span class="rh">১৫ মিনিটের মধ্যে</span> সম্পন্ন করতে হবে। সকল Rematch-এও Video Rules বাধ্যতামূলক।</div>
-      </div>
-    </div>
-
-    <!-- 10 -->
-    <div class="rules-section collapsed" id="rs10">
-      <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">🎮</span>
-        <span class="rules-title">SMART Assist Rules</span>
-        <span class="rules-toggle">▼</span>
-      </div>
-      <div class="rules-body">
-        <div class="rule-row"><span class="rl rl-red">⛔</span> কোনো Player <span style="color:var(--red);font-weight:600">SMART Assist ON</span> করে খেললে সেই ম্যাচ <span class="rh">❌ Auto Loss</span> এবং <span class="rh">🟨 ১টি Yellow Card</span>।</div>
-      </div>
-    </div>
-
-    <!-- 11 -->
-    <div class="rules-section collapsed" id="rs11">
-      <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">🪪</span>
-        <span class="rules-title">User ID &amp; Device Verification</span>
-        <span class="rules-toggle">▼</span>
-      </div>
-      <div class="rules-body">
-        <div class="rule-row">ম্যাচ শেষে দেখানো User ID বা Device Name ম্যাচে ব্যবহৃত তথ্যের সাথে না মিললে <span style="color:var(--red);font-weight:600">❌ Auto Loss</span>।</div>
-        <div class="rule-row">ভিডিওতে অবশ্যই দেখাতে হবে: <span class="rh">✅ SMART Assist OFF</span>, <span class="rh">✅ User ID</span>, <span class="rh">✅ Device Name</span>, <span class="rh">✅ Match Result</span>।</div>
-      </div>
-    </div>
-
-    <!-- 12 -->
-    <div class="rules-section collapsed" id="rs12">
-      <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">🟥</span>
-        <span class="rules-title">In-Game Red Card Rules</span>
-        <span class="rules-toggle">▼</span>
-      </div>
-      <div class="rules-body">
-        <div class="rule-row">কোনো Player ম্যাচ চলাকালীন Red Card পেয়ে Disconnect হলে: Opponent অতিরিক্ত <span class="rh">১ গোল লিড</span> নিয়ে বাকি সময় খেলবে। Opponent আগে থেকেই Lead-এ থাকলে সেই Lead-এর সাথে আরও ১ গোল যুক্ত হবে।</div>
-        <div class="rule-row" style="background:rgba(52,211,153,0.06);border-left:3px solid var(--green);border-radius:6px;padding:10px 14px">
-          <strong style="color:var(--green)">📝 উদাহরণ:</strong> স্কোর 2-1 অবস্থায় Red Card পাওয়া Player Disconnect করলে ম্যাচ <span class="rh">3-1</span> স্কোর থেকে Resume হবে।
-        </div>
-      </div>
-    </div>
-
-    <!-- 13 -->
-    <div class="rules-section collapsed" id="rs13">
-      <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">🟨</span>
-        <span class="rules-title">Card System</span>
-        <span class="rules-toggle">▼</span>
-      </div>
-      <div class="rules-body">
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--yellow)">🟨 Yellow Card পাওয়ার কারণ</strong></div>
-        <div class="rule-row">প্রমাণ ছাড়া Disconnect • সময়মতো ম্যাচ না খেলা • অসহযোগিতা • অযৌক্তিক আচরণ • গালিগালাজ • ব্যক্তিগত আক্রমণ • Haha React, ইত্যাদি।</div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--red)">🟥 Red Card পাওয়ার কারণ</strong></div>
-        <div class="rule-row">গুরুতর অসদাচরণ • Officials-এর অসম্মান • গুরুতর Rule Violation।</div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 Card Rules</strong></div>
-        <div class="rule-row">🟨 ২টি Yellow Card = ১টি Red Card। ❌ Match Result-এর আগে Red Card = Auto Loss। ✅ Match Result-এর পরে Red Card = Result বহাল থাকবে।</div>
-        <div class="rule-row">⏳ Yellow Card <span class="rh">২ দিন</span> পর্যন্ত কার্যকর থাকবে — এই সময়ে আরেকটি Yellow Card পেলে Red Card হবে। 🚫 Red Card পেলে পরবর্তী <span class="rh">২ ম্যাচ</span> নিষিদ্ধ।</div>
-      </div>
-    </div>
-
-    <!-- 14 -->
-    <div class="rules-section collapsed" id="rs14">
-      <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">⚡</span>
-        <span class="rules-title">Auto Win &amp; Activity Rules</span>
-        <span class="rules-toggle">▼</span>
-      </div>
-      <div class="rules-body">
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 Priority Time Rule</strong></div>
-        <div class="rule-row">Priority Time Main Deadline-এর <span class="rh">১০ মিনিট আগে</span> থেকে শুরু হবে।</div>
-        <div class="rule-row" style="background:rgba(156,47,76,0.06);border-left:3px solid var(--primary);border-radius:6px;padding:10px 14px">
-          <strong style="color:var(--primary)">📝 উদাহরণ:</strong> Main Deadline: <span class="rh">12:00 AM</span> হলে Priority Time শুরু: <span class="rh">11:50 PM</span>।
-        </div>
-        <div class="rule-row">Priority Time-এর মধ্যে Opponent-এর Response না পেলে, Main Deadline শেষ হওয়ার পর Active Player <span class="rh">Auto Win</span> পাবে।</div>
-        <div class="rule-row">তবে Priority Time-এর মধ্যে Opponent Response করলে, Main Deadline-এর পর ম্যাচ সম্পন্ন করার জন্য অতিরিক্ত <span class="rh">৫ মিনিট</span> সময় দেওয়া হবে। অতিরিক্ত ৫ মিনিটের মধ্যেও Opponent ম্যাচে না এলে Active Player Auto Win পাবে।</div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 Auto Win Scoreline</strong></div>
-        <div class="rule-row">Auto Win নিশ্চিত হলে ম্যাচের ফলাফল সবসময় নির্ধারিত <span class="rh">🏆 3-0</span> স্কোরলাইনে রেকর্ড করা হবে।</div>
-        <div class="rule-row"><span class="rl rl-red">★</span> Activity ও Response যাচাই করে Admin Panel Auto Win-এর সিদ্ধান্ত দেবে — Admin Panel-এর সিদ্ধান্তই চূড়ান্ত।</div>
-      </div>
-    </div>
-
-    <!-- 15 -->
-    <div class="rules-section collapsed" id="rs15">
-      <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">🛡️</span>
-        <span class="rules-title">Formation Rules</span>
-        <span class="rules-toggle">▼</span>
-      </div>
-      <div class="rules-body">
-        <div class="rule-row">✅ <span class="rh">Double Defence</span> — Allowed</div>
-        <div class="rule-row">✅ <span class="rh">Double Attack</span> — Allowed</div>
-      </div>
-    </div>
-
-    <!-- 16 -->
-    <div class="rules-section collapsed" id="rs16">
-      <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">⚡</span>
-        <span class="rules-title">Backpass Rules</span>
-        <span class="rules-toggle">▼</span>
-      </div>
-      <div class="rules-body">
-        <div class="rule-row"><span style="color:var(--red);font-weight:600">🚫 ইচ্ছাকৃত Backpass সম্পূর্ণ নিষিদ্ধ।</span> Opponent Video Proof দিলে Admin Panel যাচাই করবে। অভিযোগ প্রমাণিত হলে যত মিনিট Backpass খেলা হয়েছে, ঠিক তত মিনিট পুনরায় খেলতে হবে। ভিডিও প্রমাণ ছাড়া অভিযোগ গ্রহণযোগ্য হবে না।</div>
-      </div>
-    </div>
-
-    <!-- 17 -->
-    <div class="rules-section collapsed" id="rs17">
-      <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">📍</span>
-        <span class="rules-title">Appeal Rule</span>
-        <span class="rules-toggle">▼</span>
-      </div>
-      <div class="rules-body">
-        <div class="rule-row">ম্যাচ শুরুর প্রথম <span class="rh">০-১০ সেকেন্ডের মধ্যে</span> Pause দিয়ে ভিডিওসহ অভিযোগ করতে হবে।</div>
-        <div class="rule-row"><span class="rl rl-red">⛔</span> Half Time বা Full Time-এর পরে অভিযোগ গ্রহণযোগ্য হবে না।</div>
-      </div>
-    </div>
-
-    <!-- 18 -->
-    <div class="rules-section collapsed" id="rs18">
-      <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">📝</span>
-        <span class="rules-title">Final Notes</span>
-        <span class="rules-toggle">▼</span>
-      </div>
-      <div class="rules-body">
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 সকল Video Proof-এ বাধ্যতামূলক</strong></div>
-        <div class="rule-row"><span class="rh">✅ SMART Assist OFF</span> &nbsp;<span class="rh">✅ Device Name</span> &nbsp;<span class="rh">✅ User ID</span> &nbsp;<span class="rh">✅ Match Result</span></div>
-        <div class="rule-row" style="padding-bottom:4px"><strong style="color:var(--primary)">📍 সকল Rematch-এর ক্ষেত্রে</strong></div>
-        <div class="rule-row"><span class="rh">✅ Video Rules বাধ্যতামূলক</span> এবং <span class="rh">✅ Disconnect Match ও Rematch ১৫ মিনিটের মধ্যে সম্পন্ন</span> করতে হবে।</div>
-      </div>
-    </div>
-
-    <!-- 19 -->
-    <div class="rules-section collapsed" id="rs19">
-      <div class="rules-header" onclick="toggleRule(this)">
-        <span style="font-size:1.2rem">🏛️</span>
-        <span class="rules-title">Admin Authority</span>
-        <span class="rules-toggle">▼</span>
-      </div>
-      <div class="rules-body">
-        <div class="rule-row"><strong style="color:var(--red)">সকল অভিযোগ, প্রমাণ, শাস্তি, Auto Win, Rematch এবং Card সংক্রান্ত বিষয়ে Admin Panel-এর সিদ্ধান্তই চূড়ান্ত।</strong></div>
-        <div class="rule-row">Tournament Authority প্রয়োজনে Tournament-এর স্বার্থে অতিরিক্ত সিদ্ধান্ত নেওয়ার অধিকার সংরক্ষণ করে।</div>
+        <div class="rule-row">ℹ️ কোনো নিয়ম বা অন্য কোনো বিষয়ে কোনো কিছু বুঝতে সমস্যা হলে বা দ্বিধা থাকলে সরাসরি <span class="rh">Admin-এর Inbox-এ</span> যোগাযোগ করুন।</div>
       </div>
     </div>
 
@@ -3334,7 +3156,7 @@ if (document.readyState === 'loading') {
         <div class="admin-tab" onclick="switchAdminTab('resultmgmt')">📤 Result Requests <span id="pendingResultCount" style="background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:11px;margin-left:4px">0</span></div>
         <div class="admin-tab" style="display:none" onclick="switchAdminTab('tournament')">🏟️ Tournament</div>
         <div class="admin-tab" style="display:none" onclick="switchAdminTab('fourman')">👥 4-Man Tournament</div>
-        <div class="admin-tab pc-only-admin" onclick="switchAdminTab('solotourney')">🎮 Solo Tournament</div>
+        <div class="admin-tab" onclick="switchAdminTab('solotourney')">🎮 Solo Tournament</div>
         <div class="admin-tab" style="display:none" onclick="switchAdminTab('matchdayctrl')">🗓️ Matchday Control</div>
         <div class="admin-tab" onclick="switchAdminTab('notice')">📢 Notice</div>
         <div class="admin-tab" style="display:none" onclick="switchAdminTab('boutdraw')">🎲 Bout Draw</div>
@@ -4217,7 +4039,6 @@ if (document.readyState === 'loading') {
 
 <!-- ══════════════ SOLO TOURNAMENT (ADMIN) ══════════════ -->
 <div class="admin-section" id="adminTab-solotourney">
-  <div class="pc-only-note">🖥️ Solo Tournament admin shudhu PC/laptop theke kaj korbe. Mobile-e open kora jabe na.</div>
   <div class="trn-admin-section" style="border:1.5px solid var(--gold)">
     <div class="trn-admin-section-title">Auto Tournament (24 / 32 Player)</div>
     <p style="font-size:13px;color:var(--text3);margin-bottom:14px">24 player = 4 group x 6 (top 4 ashbe) &middot; 32 player = 8 group x 4 (top 2 ashbe). Duita format-i 16 jon knockout-e jay: Round of 16 &rarr; QF &rarr; SF (2 leg) &rarr; Final (1 leg).</p>
@@ -4227,7 +4048,7 @@ if (document.readyState === 'loading') {
       <div id="soloAutoCount" style="margin:2px 0 10px;font-size:14px;font-weight:700"></div>
       <select class="form-input" id="soloAutoPlayers" multiple size="12" style="display:none" onchange="soloAutoCount()"></select>
     </div>
-    <div class="form-group" style="border:1px dashed var(--gold);border-radius:12px;padding:12px">
+    <div class="form-group pc-only-fixed" style="border:1px dashed var(--gold);border-radius:12px;padding:12px">
       <label class="form-label">📌 Fixed Group (optional) — কিছু player নির্দিষ্ট group-এ আটকে দাও, বাকিরা random</label>
       <select class="form-input" id="soloFixedGroup" style="max-width:260px;margin-bottom:10px">
         <option value="">-- কোনো fixed group নেই --</option>
@@ -8224,7 +8045,7 @@ window.switchAdminTab = function(tab) {
   }
   if (tab === 'tournament') { loadTrnAdminTeams(); if (typeof loadTrnStatsAdminList === 'function') loadTrnStatsAdminList(); }
   if (tab === 'fourman' && typeof loadF4mAdminSquads === 'function') { loadF4mAdminSquads(); loadF4mAdminMatchdays(); if (typeof loadF4mStatsAdminList === 'function') loadF4mStatsAdminList(); }
-  if (tab === 'solotourney' && !window.matchMedia('(pointer: coarse), (max-width: 820px)').matches && typeof loadSoloAdminGroups === 'function') { loadSoloAdminGroups(); loadSoloAdminMatches(); loadSoloAdminKnockout(); }
+  if (tab === 'solotourney' && typeof loadSoloAdminGroups === 'function') { loadSoloAdminGroups(); loadSoloAdminMatches(); loadSoloAdminKnockout(); }
   if (tab === 'matchdayctrl' && typeof loadMatchdayControlList === 'function') loadMatchdayControlList();
   if (tab === 'aiqa' && typeof loadAdminAiQa === 'function') loadAdminAiQa();
   if (tab === 'typadmins' && typeof loadTypAdminsAdminList === 'function') loadTypAdminsAdminList();
@@ -20493,174 +20314,72 @@ function showPage(name) {
 // 📌 এখানে তোমার FAQ গুলো keywords সহ লেখো। যত বেশি keyword দিবে, bot তত ভালোভাবে মিল খুঁজে পাবে।
 // নতুন প্রশ্ন/উত্তর যোগ করতে চাইলে নিচের array-তে নতুন { keywords: [...], answer: "..." } object যোগ করো।
 const TYP_FULL_RULES_TEXT = `
-🎮
-TYP Room Create Rules
-Match Type: Standard
+🏆 TYP ACTUALLY
+🎮 MATCH SETTINGS
 Match Time: 8 Minutes
-Injury Time: ON
+SUB: ৬ জন
+Injury: ON
 Penalty: OFF
 Extra Time: OFF
-Substitutions: 5/5
-Player Condition: Normal
+Condition: Excellent
 Smart Assist: OFF
-OFFICIAL DOCUMENT
-TYP CHAMPIONSHIP
-RULES & REGULATIONS
-📋
-Squad Line-up Submission
-▼
-A প্রত্যেক Match Day-এর জন্য Squad Line-up ম্যাচের দিন দুপুর ৩:০০ টার আগে Admin-এর Inbox-এ জমা দিতে হবে।
-B Line-up জমা দেওয়ার দায়িত্ব সংশ্লিষ্ট Team Manager অথবা Captain-এর।
-C Line-up জমা দিতে ব্যর্থ হলে: দুপুর ৩:০০ টার মধ্যে জমা দিতে ব্যর্থ হলে আগের Match Day-এর Line-up স্বয়ংক্রিয়ভাবে কার্যকর বলে গণ্য হবে এবং উক্ত Line-up ব্যবহার করে Official Draw সম্পন্ন করা হবে। পরবর্তীতে কোনো আপত্তি গ্রহণযোগ্য হবে না।
-🔄
-Substitution & Swap Rules
-▼
-প্রত্যেক Match Day-এ খেলোয়াড়দের উপস্থিতি, Substitution এবং Swap নির্ধারিত Main Deadline-এর পূর্বে সম্পন্ন করতে হবে।
-📍 Substitution & Swap Deadline
-Main Deadline-এর ১০ মিনিট আগে Substitution ও Swap-এর Deadline শেষ হবে।
-📝 উদাহরণ: Main Deadline 12:00 AM হলে Sub/Swap Deadline 11:49:59 PM।
-⛔ নির্ধারিত Substitution/Swap Deadline অতিক্রম করার পর কোনো Substitution বা Swap গ্রহণযোগ্য হবে না। সকল Manager এবং Captain-কে নির্ধারিত সময়সীমা মেনে চলতে হবে।
-🃏
-Substitution & Swap Card Rules
-▼
-প্রত্যেক Team-এর কাছে প্রত্যেক Match Day-তে থাকবে: 🔄 ২টি Swap Card ও 🔁 ২টি Substitution Card।
-📍 Card Usage Rules
-Swap করার জন্য অবশ্যই "Typ: Swap Card" এবং Substitution করার জন্য অবশ্যই "Typ: Sub Card" ব্যবহার করতে হবে। নির্ধারিত TYP Card ব্যবহার না করে করা কোনো Swap বা Substitution গ্রহণযোগ্য হবে না।
-📍 Card Cancellation Rules
-Card ব্যবহারের সময় থেকে সর্বোচ্চ ৩ মিনিটের মধ্যে Cancel Request জানাতে হবে — তাহলে Card Usage বাতিল বলে গণ্য হবে এবং Card পুনরায় ব্যবহারযোগ্য থাকবে।
-⛔ ৩ মিনিট অতিক্রম করার পর আর কোনো অবস্থাতেই Card Usage Cancel করা যাবে না — Swap/Substitution চূড়ান্ত (Final) বলে গণ্য হবে।
-⚠️
-Manager Conduct & Penalty Rules
-▼
-সকল Team Manager-কে খেলোয়াড় ও দল সদস্যদের সাথে সম্মানজনক আচরণ করতে হবে।
-কোনো Manager যদি তার দলের কোনো Player-এর সাথে অসদাচরণ, অপমানজনক ভাষা বা অশোভন আচরণ করে এবং এ বিষয়ে Admin-এর কাছে প্রমাণসহ অভিযোগ জমা পড়ে, তাহলে বিষয়টি তদন্ত করা হবে।
-৳ অভিযোগ সত্য প্রমাণিত হলে সংশ্লিষ্ট Manager-এর বিরুদ্ধে ২০ টাকা জরিমানা আরোপ করা হবে।
-গুরুতর বা পুনরাবৃত্ত অসদাচরণের ক্ষেত্রে Tournament Authority অতিরিক্ত শাস্তিমূলক ব্যবস্থা গ্রহণের অধিকার সংরক্ষণ করবে। Tournament Authority-এর সিদ্ধান্তই চূড়ান্ত।
-🚫
-Match Fixing & Disciplinary Action
-▼
-Tournament-এ Match Fixing সম্পূর্ণরূপে নিষিদ্ধ। কোনো Manager Match Fixing করার চেষ্টা করলে বা জড়িত থাকার প্রমাণ পাওয়া গেলে সরাসরি Red Card প্রদান করা হবে।
-📍 Mutual Match Fixing
-উভয় দলের Manager পারস্পরিক সমঝোতায় Match Fixing করলে: ❌ ম্যাচ ০-০ Null Result, 🟥 উভয় Manager-কে Red Card এবং 🚫 TYP Group থেকে ১ মাসের জন্য Ban।
-Tournament Authority প্রয়োজনে অতিরিক্ত শাস্তিমূলক ব্যবস্থা নিতে পারবে। সকল সিদ্ধান্ত তদন্তের ভিত্তিতে নেওয়া হবে এবং চূড়ান্ত বলে গণ্য হবে।
-🚫
-Proxy Player Rules
-▼
-Tournament চলাকালীন কোনো Player-এর পরিবর্তে অন্য কোনো ব্যক্তি Proxy হিসেবে ম্যাচ খেললে তা সম্পূর্ণরূপে নিষিদ্ধ।
-📍 Proxy Player ধরা পড়লে
-কোনো Player Proxy ব্যবহার করেছে বলে Official Review-এর মাধ্যমে প্রমাণিত হলে সংশ্লিষ্ট Player-কে TYP Community থেকে Permanent Ban করা হবে।
-Permanent Ban-এর পর সংশ্লিষ্ট Player ভবিষ্যতে TYP Community-এর কোনো Tournament বা কার্যক্রমে অংশগ্রহণ করতে পারবে না।
-★ Proxy সংক্রান্ত সকল অভিযোগ প্রমাণ ও Official Review-এর ভিত্তিতে যাচাই করা হবে। Tournament Authority-এর সিদ্ধান্তই চূড়ান্ত।
-📲
-Communication, User ID & Device Change
-▼
-📍 Admin Communication
-Match Day চলাকালীন যেকোনো সমস্যা বা গুরুত্বপূর্ণ বিষয় Match Day Group-এ Admin-কে Mention করে জানাতে হবে। সিদ্ধান্তের আগে Admin-এর নির্দেশনার জন্য অপেক্ষা করতে হবে। Admin Active না থাকলে সরাসরি Admin-এর Inbox-এ যোগাযোগ করতে হবে।
-📍 User ID Information Change
-User ID পরিবর্তনের প্রয়োজন হলে বিকাল ৫:০০ টার মধ্যে নতুন User ID Submit করতে হবে। নির্ধারিত সময়ের পরে আবেদন গ্রহণযোগ্য হবে না, যদি না Tournament Authority বিশেষ অনুমতি দেয়।
-📍 Device Change Rules
-Running Tournament চলাকালীন কোনো Player নিজের Device পরিবর্তন করতে পারবে না। Tournament শুরুতে জমা দেওয়া Device Information-ই শেষ পর্যন্ত বৈধ বলে গণ্য হবে।
-📍 Emergency Device Change
-Device নষ্ট/হারিয়ে গেলে বা বাস্তব সমস্যা হলে Admin-কে অবিলম্বে জানিয়ে প্রমাণ জমা দিতে হবে। Admin যাচাই করে অনুমতি দিলেই Device Change করা যাবে। অনুমতি ছাড়া Device Change করলে তা Rule Violation হিসেবে গণ্য হবে।
-★ User ID ও Device Change সংক্রান্ত সকল বিষয়ে Tournament Authority-এর সিদ্ধান্তই চূড়ান্ত।
-🎬
-Match Result Video Rules
-▼
-🏅 Win / 🤝 Draw Match
-বিজয়ী/ড্র উভয় Player-কে ভিডিওতে অবশ্যই দেখাতে হবে: ✅ Match Result, ✅ SMART Assist OFF, ✅ User ID, ✅ Device Name। ভিডিও Match Day Group-এ জমা দিতে হবে।
-📍 Black Screen / Loading Issue
-এই সমস্যায় Match Result দেখা না গেলে সেই অবস্থা থেকেই Recording শুরু করতে হবে এবং বের হয়ে SMART Assist OFF, Device Name, User ID, Match History দেখাতে হবে।
-📍 Video Submission Time
-ম্যাচ শেষের ১৫ মিনিটের মধ্যে ভিডিও জমা দিতে হবে। Network সমস্যায় Sending অবস্থার Screenshot দিতে হবে।
-⛔ Video Submit করতে ব্যর্থ হলে: Win Match হলে Winning Player-কে Rematch খেলতে হবে; Draw Match হলে Opponent ১ গোল লিড নিয়ে Rematch খেলবে। কোনো অজুহাত গ্রহণযোগ্য নয়।
-📍 Video Submission Rule — Invalid/Incomplete Video
-যদি কোনো Player অসম্পূর্ণ (Incomplete) বা ভুল ভিডিও Submit করে — অর্থাৎ ভিডিওতে ম্যাচ Verify করার জন্য প্রয়োজনীয় অংশ সম্পূর্ণভাবে না থাকে — তাহলে সেই ভিডিও Invalid হিসেবে গণ্য হবে।
-• যদি ওই Player Winning Position-এ থাকে, তাহলে ম্যাচটি Replay (Re-Match) করতে হবে।
-• যদি ম্যাচটি Draw Position-এ থাকে, তাহলে Opponent-কে ১ গোল লিড দিয়ে Replay (Re-Match) খেলতে হবে।
-সকল Player-এর দায়িত্ব সম্পূর্ণ ও পরিষ্কার Video Record করে Submit করা। ভুল বা অসম্পূর্ণ ভিডিওর দায়ভার সম্পূর্ণভাবে সংশ্লিষ্ট Player-এর।
-📡
-Match Exit / Disconnect Rules
-▼
-ম্যাচ শেষ হওয়ার আগে Exit করলে শুধুমাত্র Exit করা Player-কে Video Proof দিতে হবে — সমস্যার প্রমাণ, কেন Exit করেছে, SMART Assist OFF, Device Name, User ID দেখাতে হবে।
-📍 প্রমাণ দিতে না পারলে
-📈 Lead অবস্থায় Exit: 0-0 থেকে Rematch + 🟨 ১টি Yellow Card।
-🤝 Draw অবস্থায় Exit: Opponent ১ গোল লিড নিয়ে Rematch + 🟨 ১টি Yellow Card।
-📉 Opponent Lead অবস্থায় Exit: শুধুমাত্র 🟨 ১টি Yellow Card, বাকি সময় থেকে ম্যাচ সম্পন্ন করতে হবে।
-🚪 যাকে Winner দেখাবে সে-ই Room Create করবে এবং তাকে Video দিতে হবে না — শুধু Winner Result-এর Screenshot দিলেই যথেষ্ট।
-গেমের Technical সমস্যায় বের করে দিলে সেটিও Video-তে স্পষ্টভাবে দেখাতে হবে।
-⛔ সঠিক প্রমাণ দিতে ব্যর্থ হলে Opponent ১ গোল লিড নিয়ে বাকি সময় থেকে ম্যাচ সম্পন্ন করবে।
-⏱️ সকল Disconnect Match, Resume Match ও Rematch সর্বোচ্চ ১৫ মিনিটের মধ্যে সম্পন্ন করতে হবে। সকল Rematch-এও Video Rules বাধ্যতামূলক।
-🎮
-SMART Assist Rules
-▼
-⛔ কোনো Player SMART Assist ON করে খেললে সেই ম্যাচ ❌ Auto Loss এবং 🟨 ১টি Yellow Card।
-🪪
-User ID & Device Verification
-▼
-ম্যাচ শেষে দেখানো User ID বা Device Name ম্যাচে ব্যবহৃত তথ্যের সাথে না মিললে ❌ Auto Loss।
-ভিডিওতে অবশ্যই দেখাতে হবে: ✅ SMART Assist OFF, ✅ User ID, ✅ Device Name, ✅ Match Result।
-🟥
-In-Game Red Card Rules
-▼
-কোনো Player ম্যাচ চলাকালীন Red Card পেয়ে Disconnect হলে: Opponent অতিরিক্ত ১ গোল লিড নিয়ে বাকি সময় খেলবে। Opponent আগে থেকেই Lead-এ থাকলে সেই Lead-এর সাথে আরও ১ গোল যুক্ত হবে।
-📝 উদাহরণ: স্কোর 2-1 অবস্থায় Red Card পাওয়া Player Disconnect করলে ম্যাচ 3-1 স্কোর থেকে Resume হবে।
-🟨
-Card System
-▼
-🟨 Yellow Card পাওয়ার কারণ
-প্রমাণ ছাড়া Disconnect • সময়মতো ম্যাচ না খেলা • অসহযোগিতা • অযৌক্তিক আচরণ • গালিগালাজ • ব্যক্তিগত আক্রমণ • Haha React, ইত্যাদি।
-🟥 Red Card পাওয়ার কারণ
-গুরুতর অসদাচরণ • Officials-এর অসম্মান • গুরুতর Rule Violation।
-📍 Card Rules
-🟨 ২টি Yellow Card = ১টি Red Card। ❌ Match Result-এর আগে Red Card = Auto Loss। ✅ Match Result-এর পরে Red Card = Result বহাল থাকবে।
-⏳ Yellow Card ২ দিন পর্যন্ত কার্যকর থাকবে — এই সময়ে আরেকটি Yellow Card পেলে Red Card হবে। 🚫 Red Card পেলে পরবর্তী ২ ম্যাচ নিষিদ্ধ।
-⚡
-Auto Win & Activity Rules
-▼
-📍 Priority Time Rule
-Priority Time Main Deadline-এর ১০ মিনিট আগে থেকে শুরু হবে।
-📝 উদাহরণ: Main Deadline 12:00 AM হলে Priority Time শুরু 11:50 PM।
-Priority Time-এর মধ্যে Opponent-এর Response না পেলে, Main Deadline শেষ হওয়ার পর Active Player Auto Win পাবে।
-তবে Priority Time-এর মধ্যে Opponent Response করলে, Main Deadline-এর পর ম্যাচ সম্পন্ন করার জন্য অতিরিক্ত ৫ মিনিট সময় দেওয়া হবে। অতিরিক্ত ৫ মিনিটের মধ্যেও Opponent ম্যাচে না এলে Active Player Auto Win পাবে।
-📍 Auto Win Scoreline
-Auto Win নিশ্চিত হলে ম্যাচের ফলাফল সবসময় নির্ধারিত ৩-০ (3-0) স্কোরলাইনে রেকর্ড করা হবে।
-★ Activity ও Response যাচাই করে Admin Panel Auto Win-এর সিদ্ধান্ত দেবে — Admin Panel-এর সিদ্ধান্তই চূড়ান্ত।
-🛡️
-Formation Rules
-▼
-✅ Double Defence — Allowed
-✅ Double Attack — Allowed
-⛔
-Backpass Rules
-▼
-🚫 ইচ্ছাকৃত Backpass সম্পূর্ণ নিষিদ্ধ। Opponent Video Proof দিলে Admin Panel যাচাই করবে। অভিযোগ প্রমাণিত হলে যত মিনিট Backpass খেলা হয়েছে, ঠিক তত মিনিট পুনরায় খেলতে হবে। ভিডিও প্রমাণ ছাড়া অভিযোগ গ্রহণযোগ্য হবে না।
-📍
-Appeal Rule
-▼
-ম্যাচ শুরুর প্রথম ০-১০ সেকেন্ডের মধ্যে Pause দিয়ে ভিডিওসহ অভিযোগ করতে হবে। Half Time বা Full Time-এর পরে অভিযোগ গ্রহণযোগ্য হবে না।
-📝
-Final Notes
-▼
-📍 সকল Video Proof-এ বাধ্যতামূলক
-✅ SMART Assist OFF   ✅ Device Name   ✅ User ID   ✅ Match Result
-📍 সকল Rematch-এর ক্ষেত্রে
-✅ Video Rules বাধ্যতামূলক এবং ✅ Disconnect Match ও Rematch ১৫ মিনিটের মধ্যে সম্পন্ন করতে হবে।
-🏛️
-Admin Authority
-▼
-সকল অভিযোগ, প্রমাণ, শাস্তি, Auto Win, Rematch এবং Card সংক্রান্ত বিষয়ে Admin Panel-এর সিদ্ধান্তই চূড়ান্ত। Tournament Authority প্রয়োজনে Tournament-এর স্বার্থে অতিরিক্ত সিদ্ধান্ত নেওয়ার অধিকার সংরক্ষণ করে।
-CHAMPIONSHIP — PRESENT
 
+📋 MATCH RULES
+
+1. GROUP STAGE MATCH & DEADLINE
+প্রতিটি গ্রুপে ৪ জন করে প্লেয়ার থাকবে।
+একজন প্লেয়ার গ্রুপের বাকি ৩ জনের সাথে ১টি করে ম্যাচ খেলবে (সব মিলিয়ে ১ জনের মোট ৩টি ম্যাচ)।
+Point System: Win (জয়) = ৩ পয়েন্ট, Draw (ড্র) = ১ পয়েন্ট, Loss (পরাজয়) = ০ পয়েন্ট।
+DEADLINE: পরবর্তী বিজ্ঞপ্তিতে ঘোষণা করা হবে।
+জয়ী অথবা ড্র হওয়া ম্যাচের পর Match Result-এর Screenshot অবশ্যই রাখতে হবে।
+
+2. IN-GAME RED CARD RULE
+Red Card পাওয়ার পর ইচ্ছাকৃতভাবে ম্যাচ থেকে বের হলে, প্রমাণসহ অভিযোগ প্রমাণিত হলে ১টি Yellow Card পাবে।
+নতুন ম্যাচ হবে এবং Opponent ১ গোল লিডে থাকবে।
+
+3. AUTO WIN & ACTIVITY RULE
+সারাদিন Opponent-কে Mention/Message করে ম্যাচ খেলার চেষ্টা করলেও Opponent না এলে Activity প্রমাণ হিসেবে গণ্য হবে।
+গ্রুপে কে কতক্ষণ Active ছিল এবং সারাদিন Opponent-কে কিরকম Mention/Message দিয়েছে, Admin সবকিছু বিবেচনা করে Active Player-কে AUTO WIN প্রদান করবেন।
+প্রয়োজনে Mention/Message-এর Screenshot দিতে হবে।
+
+4. DOUBLE DEFENCE RULE
+ম্যাচে Double Defence সম্পূর্ণ নিষিদ্ধ।
+স্কোর ২–১ থাকা অবস্থায় Double Defence-এর প্রমাণ দিতে পারলে আপনার স্কোর থেকে ১ গোল মাইনাস হবে।
+২–১ → ১–১ গণনা হবে।
+
+5. NET DISCONNECT & BLACK SCREEN RULE
+খেলার মধ্যে কারো Net সমস্যা বা Black Screen হলে অবশ্যই ১০ সেকেন্ডের ভিডিও প্রমাণ দিতে হবে।
+ভিডিও প্রমাণ দিতে পারলে: ম্যাচ যে মিনিটে ডিসকানেক্ট হয়েছে, অবশিষ্ট সময়টুকু আগের স্কোর বজায় রেখেই (যেমন: ৩–১ থাকলে সেই ৩–১ থেকেই) নতুন ম্যাচে বাকি সময় খেলা হবে।
+ভিডিও প্রমাণ না দিতে পারলে / কোনো উপযুক্ত কারণ না থাকলে: শাস্তি হিসেবে Opponent ১ গোল লিডে থেকে বাকি ম্যাচ শেষ করবে।
+
+6. MATCH SUBMISSION RULE
+ম্যাচ রেজাল্ট বা স্ক্রিনশট ভুল করেও গ্রুপে দেবেন না!
+ম্যাচ শেষ করার পর অবশ্যই Result Edit করে সরাসরি Admin-এর Inbox-এ পাঠাতে হবে।
+ভুলবশত গ্রুপে রেজাল্ট দেওয়া বা রেজাল্ট জমা না দেওয়ার কারণে ম্যাচ Count না হলে Admin পক্ষ কোনোভাবেই দায়ী থাকবে না।
+
+7. BEHAVIOR & PENALTY RULE
+ম্যাচ চলাকালীন বা গ্রুপে কোনো ধরনের ঝামেলা, গালিগালাজ বা খারাপ আচরণ করা সম্পূর্ণ নিষিদ্ধ!
+কারো বিরুদ্ধে খারাপ ভাষার বা কোনো ঝামেলা সৃষ্টির অভিযোগ প্রমাণিত হলে সরাসরি ১টি Yellow Card দেওয়া হবে।
+মোট ২টি Yellow Card পেলে প্লেয়ারকে টুর্নামেন্ট থেকে সরাসরি BAN করা হবে!
+
+8. SMART ASSIST RULE & PENALTY
+ম্যাচে Smart Assist ON রেখে খেলা সম্পূর্ণ নিষিদ্ধ!
+ভিডিও ক্লিপে কারো Smart Assist ON থাকার প্রমাণ পাওয়া গেলে, অথবা ক্লেইম করার পর যদি প্লেয়ার উপযুক্ত ভিডিও প্রমাণ দিতে না পারে, তবে তার বিরুদ্ধে অ্যাকশন নেওয়া হবে:
+অপরাধ প্রমাণিত হলে বা ভিডিও প্রমাণ দিতে ব্যর্থ হলে প্লেয়ারকে ১টি Yellow Card দেওয়া হবে।
+যদি উক্ত প্লেয়ার ম্যাচে জয়ীও হয়ে থাকে, তবে শাস্তি হিসেবে Opponent-কে ১ গোল লিড (১–০) দিয়ে পুনরায় নতুন করে ম্যাচ খেলতে হবে।
+
+💬 HELP & SUPPORT
+কোনো নিয়ম বা অন্য কোনো বিষয়ে কোনো কিছু বুঝতে সমস্যা হলে বা দ্বিধা থাকলে সরাসরি Admin-এর Inbox-এ যোগাযোগ করুন।
 `;
 
 const TYP_FAQ = [
   {
-    keywords: ['room create', 'room settings', 'রুম', 'match type', 'match settings', 'injury time', 'smart assist', 'game settings'],
-    answer: '🎮 TYP Room Create Rules:\n• Match Type: Standard\n• Match Time: 8 Minutes\n• Injury Time: ON\n• Penalty: OFF\n• Extra Time: OFF\n• Substitutions: 5/5\n• Player Condition: Normal\n• Smart Assist: OFF'
+    keywords: ['room create', 'room settings', 'রুম', 'match type', 'match settings', 'injury', 'game settings', 'match time', 'extra time', 'condition', 'সেটিংস'],
+    answer: '🎮 Match Settings:\n• Match Time: 8 Minutes\n• SUB: ৬ জন\n• Injury: ON\n• Penalty: OFF\n• Extra Time: OFF\n• Condition: Excellent\n• Smart Assist: OFF'
   },
   {
     keywords: ['point', 'পয়েন্ট', 'পয়েন্ট সিস্টেম', 'win', 'জিত', '৩ পয়েন্ট', 'draw', 'ড্র'],
-    answer: 'TYP-এর League ম্যাচে পয়েন্ট সিস্টেম:\n• প্রতিটা bout (1v1) জিতলে = 3 পয়েন্ট\n• Draw হলে = উভয় দল 1 পয়েন্ট করে\n• হারলে = 0 পয়েন্ট\nMatchday summary card-এ এই মোট পয়েন্ট দেখানো হয়।'
+    answer: '📊 Point System:\n• Win (জয়) = ৩ পয়েন্ট\n• Draw (ড্র) = ১ পয়েন্ট\n• Loss (পরাজয়) = ০ পয়েন্ট'
   },
   {
     keywords: ['registration', 'রেজিস্ট্রেশন', 'যোগ', 'নাম লেখা', 'join', 'খেলোয়াড় হতে', 'নতুন প্লেয়ার'],
@@ -20684,15 +20403,15 @@ const TYP_FAQ = [
   },
   {
     keywords: ['বিরোধ', 'dispute', 'ভুল ফলাফল', 'complain', 'অভিযোগ', 'রিপোর্ট'],
-    answer: 'ম্যাচের ফলাফল নিয়ে কোনো বিরোধ থাকলে স্ক্রিনশট/প্রমাণসহ Admin (Arafat/Murad/Nezam)-কে জানাও। Admin যাচাই করে প্রয়োজনে ফলাফল সংশোধন করবে। সকল অভিযোগ ও শাস্তি সংক্রান্ত সিদ্ধান্ত Admin Panel-এর — যা চূড়ান্ত।'
+    answer: 'ম্যাচের ফলাফল নিয়ে কোনো বিরোধ থাকলে স্ক্রিনশট/প্রমাণসহ Admin (Arafat/Murad/Nezam)-এর Inbox-এ জানাও। Admin যাচাই করে প্রয়োজনে ফলাফল সংশোধন করবে।'
   },
   {
     keywords: ['cheat', 'চিট', 'win trading', 'ফেয়ার প্লে', 'fair play', 'নিয়ম ভাঙা'],
     answer: 'TYP Championship-এ ফেয়ার প্লে বাধ্যতামূলক। কোনো ধরনের cheating বা win-trading (ইচ্ছাকৃত হার-জিত সাজানো) সহ্য করা হবে না — ধরা পড়লে Admin ব্যবস্থা নেবে।'
   },
   {
-    keywords: ['admin', 'অ্যাডমিন', 'যোগাযোগ', 'contact', 'arafat', 'murad', 'nezam', 'admin authority', 'চূড়ান্ত সিদ্ধান্ত'],
-    answer: 'TYP Championship-এর Admin: Arafat, Murad এবং Nezam। সকল অভিযোগ, প্রমাণ, শাস্তি, Auto Win, Rematch ও Card সংক্রান্ত সিদ্ধান্ত Admin Panel-এর এবং তা চূড়ান্ত বলে গণ্য হবে।'
+    keywords: ['admin', 'অ্যাডমিন', 'যোগাযোগ', 'contact', 'arafat', 'murad', 'nezam'],
+    answer: 'TYP Championship-এর Admin: Arafat, Murad এবং Nezam। কোনো নিয়ম বা অন্য কোনো বিষয়ে সমস্যা হলে বা দ্বিধা থাকলে সরাসরি Admin-এর Inbox-এ যোগাযোগ করো।'
   },
   {
     keywords: ['ranking', 'র‍্যাংকিং', 'র‍্যাঙ্ক', 'লিডারবোর্ড', 'leaderboard', 'rank'],
@@ -20703,74 +20422,46 @@ const TYP_FAQ = [
     answer: 'প্রতিটা খেলোয়াড়ের একটা প্রোফাইল পেজ আছে যেখানে গোল, ম্যাচ, জয়-হার-ড্র, পয়েন্ট ইত্যাদি স্ট্যাটস দেখা যায়। চাইলে ডাউনলোডযোগ্য player stats card-ও পাওয়া যায়।'
   },
 
-  // ── Tournament Rules (Rules পেজ থেকে) ──
+  // ── Match Rules (Rules পেজ থেকে) ──
   {
-    keywords: ['lineup', 'line-up', 'লাইনআপ', 'স্কোয়াড', 'squad'],
-    answer: '📋 Squad Line-up Submission:\n• প্রতিটা Match Day-এর Squad Line-up ম্যাচের দিন দুপুর ৩:০০ টার আগে Admin-এর Inbox-এ জমা দিতে হবে।\n• এই দায়িত্ব Team Manager অথবা Captain-এর।\n• সময়মতো জমা দিতে ব্যর্থ হলে আগের Match Day-এর Line-up স্বয়ংক্রিয়ভাবে কার্যকর হবে এবং সেটা দিয়েই Official Draw হবে — পরে কোনো আপত্তি গ্রহণযোগ্য হবে না।'
-  },
-  {
-    keywords: ['proxy', 'প্রক্সি', 'অন্য কেউ খেলা'],
-    answer: '🚫 Proxy Player Rules: Tournament চলাকালীন কোনো Player-এর পরিবর্তে অন্য কেউ Proxy হিসেবে ম্যাচ খেললে তা সম্পূর্ণ নিষিদ্ধ। Official Review-এ প্রমাণিত হলে সংশ্লিষ্ট Player-কে TYP Community থেকে Permanent Ban করা হবে।'
-  },
-  {
-    keywords: ['substitution', 'সাবস্টিটিউশন', 'পরিবর্তন', 'swap', 'সোয়াপ'],
-    answer: '🔄 Substitution & Swap Rules: প্রতিটা Match Day-তে খেলোয়াড়দের উপস্থিতি, Substitution ও Swap নির্ধারিত Deadline-এর মধ্যে সম্পন্ন করতে হবে। Deadline পার হলে কোনো Substitution/Swap গ্রহণযোগ্য হবে না।\n\n🎴 Card নিয়ম: প্রতি দলের কাছে প্রতি Match Day-তে ২টি Swap Card ও ২টি Substitution Card থাকে। Swap-এর জন্য "Typ: Swap Card" এবং Substitution-এর জন্য "Typ: Sub Card" ব্যবহার বাধ্যতামূলক। Card ব্যবহারের ৩ মিনিটের মধ্যে Cancel Request দেওয়া যায়, তারপর তা Final হয়ে যায়।'
-  },
-  {
-    keywords: ['priority time', 'প্রায়োরিটি', 'auto loss', 'অটো লস', 'মেনশন'],
-    answer: '⏱️ Priority Time Rule: Priority Time-এ অপোনেন্টকে মেনশন করার পর যদি আপনি অ্যাক্টিভ থাকেন, তাহলে অবশ্যই ডেডলাইনের আগেই ম্যাচ সম্পন্ন করতে হবে। ডেডলাইন অতিক্রম হলে কোনো অতিরিক্ত সময় দেওয়া হবে না এবং ম্যাচ Auto Loss হিসেবে গণ্য হবে।'
-  },
-  {
-    keywords: ['manager conduct', 'penalty', 'জরিমানা', 'fine', 'অসদাচরণ'],
-    answer: '⚠️ Manager Conduct & Penalty: সকল Manager-কে খেলোয়াড়দের সাথে সম্মানজনক আচরণ করতে হবে। অসদাচরণের প্রমাণসহ অভিযোগ প্রমাণিত হলে ২০ টাকা জরিমানা আরোপ করা হবে। গুরুতর বা পুনরাবৃত্ত ক্ষেত্রে Tournament Authority অতিরিক্ত ব্যবস্থা নিতে পারে — তাদের সিদ্ধান্তই চূড়ান্ত।'
-  },
-  {
-    keywords: ['match fixing', 'ফিক্সিং', 'fixing'],
-    answer: '🚫 Match Fixing সম্পূর্ণ নিষিদ্ধ। কোনো Manager এতে জড়িত থাকলে সরাসরি Red Card দেওয়া হবে। দুই পক্ষ মিলে Fixing করলে: ম্যাচ ০-০ Null Result, উভয় Manager-কে Red Card, এবং TYP গ্রুপ থেকে ১ মাসের জন্য Ban।'
-  },
-  {
-    keywords: ['user id', 'ইউজার আইডি', 'device', 'ডিভাইস', 'device change'],
-    answer: '📱 User ID & Device Change: User ID পরিবর্তন প্রয়োজন হলে বিকাল ৫:০০ টার মধ্যে Manager Group-এ জানাতে হবে। Tournament চলাকালীন Device পরিবর্তন করা যায় না — শুধু Device নষ্ট/হারিয়ে গেলে Admin-কে প্রমাণসহ জানিয়ে অনুমতি নিয়ে Change করা যায়। অনুমতি ছাড়া Device পরিবর্তন Rule Violation হিসেবে গণ্য হবে।'
-  },
-  {
-    keywords: ['video', 'ভিডিও', 'প্রমাণ', 'proof', 'submission', 'জমা'],
-    answer: '🎥 Match Result Video Rules:\n• বিজয়ী/ড্র উভয় প্লেয়ারকে ভিডিওতে দেখাতে হবে: Match Result, SMART Assist OFF, User ID, Device Name।\n• ম্যাচ শেষের ১৫ মিনিটের মধ্যে ভিডিও Match Day গ্রুপে জমা দিতে হবে (নেটওয়ার্ক সমস্যায় Sending screenshot দিতে হবে)।\n• Winner হলে শুধু Result Screenshot দিলেই হবে, ভিডিও লাগবে না — তবে Room Create তাকেই করতে হবে।\n• ১৫ মিনিটের মধ্যে জমা না দিলে: Win Match হলে Rematch; Draw হলে Opponent ১ গোল লিড নিয়ে Rematch শুরু করবে।\n• অসম্পূর্ণ/ভুল (Invalid) ভিডিও সাবমিট করলে: Winning Position এ থাকলে Replay, Draw হলে Opponent ১ গোল লিড দিয়ে Replay। ভুল/অসম্পূর্ণ ভিডিওর দায়ভার সংশ্লিষ্ট খেলোয়াড়ের।'
-  },
-  {
-    keywords: ['exit', 'disconnect', 'ডিসকানেক্ট', 'এক্সিট', 'বের হওয়া'],
-    answer: '🔌 Match Exit / Disconnect Rules: ম্যাচ শেষের আগে Exit করলে শুধু Exit করা প্লেয়ারকে ভিডিও প্রমাণ দিতে হবে।\n• Lead অবস্থায় Exit → 0-0 থেকে Rematch + ১টি Yellow Card\n• Draw অবস্থায় Exit → Opponent ১ গোল লিড নিয়ে Rematch + ১টি Yellow Card\n• Opponent Lead অবস্থায় Exit → শুধু ১টি Yellow Card, বাকি সময় থেকে ম্যাচ চলবে\nসকল Disconnect/Resume/Rematch ১৫ মিনিটের মধ্যে সম্পন্ন করতে হবে এবং Video Rules বাধ্যতামূলক।'
-  },
-  {
-    keywords: ['smart assist', 'স্মার্ট অ্যাসিস্ট'],
-    answer: '⚠️ SMART Assist কোনো প্লেয়ার ON করে খেললে সেই ম্যাচ Auto Loss এবং ১টি Yellow Card দেওয়া হবে। ভিডিওতে সবসময় SMART Assist OFF দেখাতে হবে।'
-  },
-  {
-    keywords: ['verification', 'auto loss', 'অটো লস', 'যাচাই'],
-    answer: '🔍 User ID & Device Verification: ম্যাচ শেষে দেখানো User ID বা Device Name আগে থেকে জমা দেওয়া তথ্যের সাথে না মিললে Auto Loss দেওয়া হবে। তাই ভিডিওতে সবসময় সঠিক SMART Assist OFF, User ID, Device Name, Match Result দেখাতে হবে।'
+    keywords: ['group stage', 'গ্রুপ স্টেজ', 'deadline', 'ডেডলাইন', 'কয়টা ম্যাচ', 'কয়জন'],
+    answer: '⚔️ Group Stage Match & Deadline:\n• প্রতিটি গ্রুপে ৪ জন করে প্লেয়ার থাকবে।\n• একজন প্লেয়ার গ্রুপের বাকি ৩ জনের সাথে ১টি করে ম্যাচ খেলবে (মোট ৩টি ম্যাচ)।\n• Win = ৩, Draw = ১, Loss = ০ পয়েন্ট।\n• DEADLINE: পরবর্তী বিজ্ঞপ্তিতে ঘোষণা করা হবে।\n• জয়ী অথবা ড্র হওয়া ম্যাচের পর Match Result-এর Screenshot অবশ্যই রাখতে হবে।'
   },
   {
     keywords: ['red card', 'রেড কার্ড', 'in-game red card'],
-    answer: '🟥 In-Game Red Card: কোনো প্লেয়ার ম্যাচ চলাকালীন Red Card পেয়ে Disconnect হলে Opponent অতিরিক্ত ১ গোল লিড নিয়ে বাকি সময় খেলবে (আগে থেকে Lead-এ থাকলে তার সাথে আরও ১ গোল যোগ হবে)।'
+    answer: '🟥 In-Game Red Card Rule: Red Card পাওয়ার পর ইচ্ছাকৃতভাবে ম্যাচ থেকে বের হলে, প্রমাণসহ অভিযোগ প্রমাণিত হলে ১টি Yellow Card পাবে। নতুন ম্যাচ হবে এবং Opponent ১ গোল লিডে থাকবে।'
   },
   {
-    keywords: ['yellow card', 'হলুদ কার্ড', 'কার্ড সিস্টেম', 'card system'],
-    answer: '🟨🟥 Card System:\n• Yellow Card পাওয়ার কারণ: প্রমাণ ছাড়া Disconnect, সময়মতো না খেলা, অসহযোগিতা, গালিগালাজ ইত্যাদি।\n• ২টি Yellow Card = ১টি Red Card। Yellow Card ২ দিন পর্যন্ত কার্যকর থাকে।\n• Match Result-এর আগে Red Card পেলে Auto Loss; পরে পেলে Result বহাল থাকে।\n• Red Card পেলে পরবর্তী ২ ম্যাচ নিষিদ্ধ।'
+    keywords: ['auto win', 'অটো উইন', 'mention', 'মেনশন', 'activity', 'inactive', 'ইনঅ্যাক্টিভ'],
+    answer: '⚡ Auto Win & Activity Rule: সারাদিন Opponent-কে Mention/Message করে ম্যাচ খেলার চেষ্টা করলেও Opponent না এলে সেটা Activity প্রমাণ হিসেবে গণ্য হবে। গ্রুপে কে কতক্ষণ Active ছিল এবং কে কতবার Mention/Message দিয়েছে, Admin সব বিবেচনা করে Active Player-কে AUTO WIN দেবেন। প্রয়োজনে Mention/Message-এর Screenshot দিতে হবে।'
   },
   {
-    keywords: ['formation', 'ফরমেশন', 'wall', 'ওয়াল', 'double defence', 'double attack'],
-    answer: '🛡️ Formation Rules: ✅ Double Defence Allowed এবং ✅ Double Attack Allowed — উভয়ই সম্পূর্ণভাবে বৈধ।'
+    keywords: ['double defence', 'ডাবল ডিফেন্স', 'formation', 'ফরমেশন', 'double'],
+    answer: '🚫 Double Defence Rule: ম্যাচে Double Defence সম্পূর্ণ নিষিদ্ধ। স্কোর ২–১ থাকা অবস্থায় Double Defence-এর প্রমাণ দিতে পারলে আপনার স্কোর থেকে ১ গোল মাইনাস হবে (২–১ → ১–১ গণনা হবে)।'
   },
   {
-    keywords: ['backpass', 'ব্যাকপাস'],
-    answer: '🚫 Backpass Rules: ইচ্ছাকৃত Backpass সম্পূর্ণ নিষিদ্ধ। Opponent ভিডিও প্রমাণ দিলে Admin Panel যাচাই করবে; প্রমাণিত হলে যত মিনিট Backpass খেলা হয়েছে, ঠিক তত মিনিট পুনরায় খেলতে হবে। ভিডিও প্রমাণ ছাড়া অভিযোগ গ্রহণযোগ্য নয়।'
+    keywords: ['net disconnect', 'নেট', 'disconnect', 'ডিসকানেক্ট', 'black screen', 'ব্ল্যাক স্ক্রিন', 'exit', 'এক্সিট'],
+    answer: '🌐 Net Disconnect & Black Screen Rule: Net সমস্যা বা Black Screen হলে অবশ্যই ১০ সেকেন্ডের ভিডিও প্রমাণ দিতে হবে।\n• ভিডিও প্রমাণ দিতে পারলে: যে মিনিটে ডিসকানেক্ট হয়েছে, আগের স্কোর বজায় রেখেই (যেমন ৩–১ থাকলে ৩–১ থেকেই) নতুন ম্যাচে বাকি সময় খেলা হবে।\n• ভিডিও প্রমাণ না দিতে পারলে / উপযুক্ত কারণ না থাকলে: Opponent ১ গোল লিডে থেকে বাকি ম্যাচ শেষ করবে।'
   },
   {
-    keywords: ['auto win', 'mention', 'মেনশন', 'activity', 'inactive', 'ইনঅ্যাক্টিভ'],
-    answer: '⏱️ Auto Win & Activity Rules: Priority Time-এর মধ্যে অপোনেন্টকে কমপক্ষে ২ বার Mention করতে হবে (প্রতি Mention-এর মাঝে ন্যূনতম ২ মিনিট ব্যবধান)। ২ বারের কম Mention হলে এক্সটা ৫ মিনিট দেওয়া হয়; সেই সময়েও সাড়া না পেলে Auto Win আবেদনযোগ্য। Fixed Time শেষের ২০ মিনিটের মধ্যে Mention না করলে প্লেয়ারকে Inactive ধরা হবে। Auto Win নিশ্চিত হলে ফলাফল সবসময় ৩-০ (3-0) স্কোরলাইনে রেকর্ড হবে। চূড়ান্ত সিদ্ধান্ত Admin Panel-এর।'
+    keywords: ['submission', 'submit', 'জমা', 'রেজাল্ট', 'result', 'স্ক্রিনশট', 'screenshot', 'result edit'],
+    answer: '📩 Match Submission Rule: ম্যাচ রেজাল্ট বা স্ক্রিনশট ভুল করেও গ্রুপে দেবেন না! ম্যাচ শেষে Result Edit করে সরাসরি Admin-এর Inbox-এ পাঠাতে হবে। ভুলবশত গ্রুপে রেজাল্ট দিলে বা জমা না দিলে ম্যাচ Count না হওয়ার দায় Admin পক্ষ নেবে না।'
+  },
+  {
+    keywords: ['behavior', 'behaviour', 'আচরণ', 'গালি', 'গালিগালাজ', 'ban', 'ব্যান', 'yellow card', 'হলুদ কার্ড', 'penalty rule'],
+    answer: '🤬 Behavior & Penalty Rule: ম্যাচ চলাকালীন বা গ্রুপে ঝামেলা, গালিগালাজ বা খারাপ আচরণ সম্পূর্ণ নিষিদ্ধ। অভিযোগ প্রমাণিত হলে ১টি Yellow Card 🟨 দেওয়া হবে। মোট ২টি Yellow Card পেলে প্লেয়ারকে টুর্নামেন্ট থেকে সরাসরি BAN করা হবে।'
+  },
+  {
+    keywords: ['smart assist', 'স্মার্ট অ্যাসিস্ট'],
+    answer: '⚙️ Smart Assist Rule & Penalty: Smart Assist ON রেখে খেলা সম্পূর্ণ নিষিদ্ধ। ভিডিও ক্লিপে ON থাকার প্রমাণ পাওয়া গেলে, অথবা ক্লেইম করার পর প্লেয়ার উপযুক্ত ভিডিও প্রমাণ দিতে না পারলে ১টি Yellow Card দেওয়া হবে। প্লেয়ার ম্যাচে জিতলেও Opponent-কে ১–০ লিড দিয়ে নতুন করে ম্যাচ খেলতে হবে।'
+  },
+  {
+    keywords: ['help', 'support', 'সাপোর্ট', 'সাহায্য', 'দ্বিধা'],
+    answer: '💬 Help & Support: কোনো নিয়ম বা অন্য কোনো বিষয়ে বুঝতে সমস্যা হলে বা দ্বিধা থাকলে সরাসরি Admin-এর Inbox-এ যোগাযোগ করো।'
   },
   {
     keywords: ['রুলস', 'rule', 'rules', 'নিয়মাবলী', 'নিয়ম কি'],
-    answer: 'TYP Championship-এর পূর্ণাঙ্গ নিয়মাবলী উপরের মেনু থেকে "Rules" পেজে আছে — মোট ২০টা বিভাগে (Line-up, Substitution, Video Rules, Card System, Formation, Backpass, Auto Win, Proxy Player, Appeal ইত্যাদি)। নির্দিষ্ট কোনো নিয়ম জানতে চাইলে সরাসরি জিজ্ঞেস করো — যেমন "video rules", "card system", "backpass rule", "formation" ইত্যাদি।'
+    answer: 'TYP Championship-এর নিয়মাবলী উপরের মেনু থেকে "Rules" পেজে আছে — Match Settings এবং ৮টি Match Rule (Group Stage & Deadline, Red Card, Auto Win, Double Defence, Net Disconnect, Match Submission, Behavior & Penalty, Smart Assist)। নির্দিষ্ট কোনো নিয়ম জানতে চাইলে সরাসরি জিজ্ঞেস করো — যেমন "double defence", "smart assist", "auto win" ইত্যাদি।'
   }
 ];
 
