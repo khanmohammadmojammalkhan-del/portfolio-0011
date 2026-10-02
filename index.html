@@ -1123,6 +1123,21 @@ select.form-input option { background: var(--card); color: var(--text); }
 .friendly-tab.active { color:var(--text); border-bottom-color:var(--accent); }
 
 @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
+/* ── Solo player picker (tap-to-select, no Ctrl needed) ── */
+.spk{border:1px solid var(--border);border-radius:12px;background:var(--card2);overflow:hidden}
+.spk-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px;border-bottom:1px solid var(--border)}
+.spk-search{flex:1;min-width:140px;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:14px;font-family:inherit}
+.spk-btn{padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.spk-count{font-size:12px;font-weight:700;color:var(--text3);padding:0 4px}
+.spk-list{max-height:320px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.spk-row{display:flex;align-items:center;gap:12px;padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--border);user-select:none;font-size:14px;font-weight:600;color:var(--text)}
+.spk-row:last-child{border-bottom:none}
+.spk-row:hover{background:rgba(201,168,76,.08)}
+.spk-row.on{background:rgba(201,168,76,.16)}
+.spk-row input{width:18px;height:18px;accent-color:#c9a84c;flex-shrink:0;pointer-events:none}
+.spk-row .nm{flex:1}
+.spk-tag{font-size:10.5px;font-weight:700;color:var(--text3);border:1px solid var(--border);border-radius:20px;padding:2px 8px}
+.spk-empty{padding:16px;text-align:center;font-size:13px;color:var(--text3)}
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
@@ -4206,8 +4221,8 @@ if (document.readyState === 'loading') {
       </select>
     </div>
     <div class="form-group">
-      <label class="form-label">Players (Ctrl/Cmd diye multiple select) <span id="soloAutoCount" style="margin-left:10px;font-weight:700"></span></label>
-      <select class="form-input" id="soloAutoPlayers" multiple size="12" style="height:auto" onchange="soloAutoCount()"></select>
+      <label class="form-label">Players (naam-e tap kore select korun) <span id="soloAutoCount" style="margin-left:10px;font-weight:700"></span></label>
+      <select class="form-input" id="soloAutoPlayers" multiple size="12" style="display:none" onchange="soloAutoCount()"></select>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn btn-gold" onclick="soloAutoDraw()" style="padding:9px 20px;font-size:13px">1. Random Draw + Fixtures</button>
@@ -4218,14 +4233,14 @@ if (document.readyState === 'loading') {
   </div>
   <div class="trn-admin-section">
     <div class="trn-admin-section-title">👥 Create Group</div>
-    <p style="font-size:13px;color:var(--text3);margin-bottom:14px">যত ইচ্ছা group বানাও, প্রতি group-এ যত জন খুশি player রাখো (Ctrl/Cmd চেপে একাধিক player সিলেক্ট করো)। Group stage single round-robin হবে — group-এর মধ্যে সবাই সবার সাথে একবার করে খেলবে।</p>
+    <p style="font-size:13px;color:var(--text3);margin-bottom:14px">যত ইচ্ছা group বানাও, প্রতি group-এ যত জন খুশি player রাখো (নামের উপর ট্যাপ করে একাধিক player সিলেক্ট করো)। Group stage single round-robin হবে — group-এর মধ্যে সবাই সবার সাথে একবার করে খেলবে।</p>
     <div class="form-group">
       <label class="form-label">Group Name</label>
       <input class="form-input" id="soloGrName" placeholder="e.g. Group A">
     </div>
     <div class="form-group">
-      <label class="form-label">Players (Ctrl/Cmd চেপে multiple সিলেক্ট করো)</label>
-      <select class="form-input" id="soloGrPlayers" multiple size="8" style="height:auto"></select>
+      <label class="form-label">Players (নামের উপর ট্যাপ/ক্লিক করলেই সিলেক্ট হবে)</label>
+      <select class="form-input" id="soloGrPlayers" multiple size="8" style="display:none"></select>
     </div>
     <button class="btn btn-gold" onclick="createSoloGroup()" style="padding:9px 22px;font-size:13px">➕ Group Create করো</button>
     <span id="soloGrStatus" style="margin-left:12px;font-size:13px"></span>
@@ -14296,10 +14311,62 @@ window.loadSoloAdminGroups = async function() {
   soloPopulateAutoPlayers();
 };
 
+// ── Tap-to-select player picker (replaces Ctrl/Cmd multi-select) ──
+// The hidden <select multiple> stays the source of truth, so existing code
+// (selectedOptions etc.) keeps working unchanged.
+window.soloPickerRender = function(selectId, tagMap) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const pid = selectId + '_picker';
+  let box = document.getElementById(pid);
+  if (!box) { box = document.createElement('div'); box.id = pid; box.className = 'spk'; sel.insertAdjacentElement('afterend', box); }
+  if (tagMap) box._tags = tagMap;
+  const tags = box._tags || {};
+  const opts = Array.from(sel.options);
+  const q = (box._q || '').toLowerCase();
+  const total = opts.filter(o => o.selected).length;
+  const rows = opts.filter(o => !q || o.textContent.toLowerCase().includes(q)).map(o => `
+    <div class="spk-row${o.selected ? ' on' : ''}" data-uid="${o.value}">
+      <input type="checkbox" tabindex="-1"${o.selected ? ' checked' : ''}>
+      <span class="nm">${o.textContent}</span>${tags[o.value] ? `<span class="spk-tag">${tags[o.value]}</span>` : ''}
+    </div>`).join('');
+  box.innerHTML = `
+    <div class="spk-top">
+      <input class="spk-search" type="search" placeholder="🔍 Player খুঁজো..." value="${(box._q || '').replace(/"/g, '&quot;')}">
+      <button type="button" class="spk-btn" data-act="all">✓ সব (দেখা যাচ্ছে)</button>
+      <button type="button" class="spk-btn" data-act="none">✕ Clear</button>
+      <span class="spk-count">${total} selected</span>
+    </div>
+    <div class="spk-list">${rows || '<div class="spk-empty">কোনো player পাওয়া যায়নি</div>'}</div>`;
+  const fire = () => { sel.dispatchEvent(new Event('change', { bubbles: true })); };
+  const listScroll = box.querySelector('.spk-list');
+  const keepScroll = (fn) => { const t = listScroll.scrollTop; fn(); const l = box.querySelector('.spk-list'); if (l) l.scrollTop = t; };
+  box.querySelector('.spk-search').oninput = (e) => {
+    box._q = e.target.value;
+    const pos = e.target.selectionStart;
+    soloPickerRender(selectId);
+    const ni = box.querySelector('.spk-search'); ni.focus(); try { ni.setSelectionRange(pos, pos); } catch (_) {}
+  };
+  box.querySelectorAll('.spk-row').forEach(r => r.onclick = () => {
+    const o = opts.find(x => x.value === r.dataset.uid); if (!o) return;
+    o.selected = !o.selected; fire(); keepScroll(() => soloPickerRender(selectId));
+  });
+  box.querySelectorAll('.spk-btn').forEach(b => b.onclick = () => {
+    const visible = new Set(Array.from(box.querySelectorAll('.spk-row')).map(r => r.dataset.uid));
+    opts.forEach(o => { if (b.dataset.act === 'none') o.selected = false; else if (visible.has(o.value)) o.selected = true; });
+    fire(); soloPickerRender(selectId);
+  });
+};
+
 function soloPopulatePlayerMultiSelect() {
   const el = document.getElementById('soloGrPlayers');
   if (!el) return;
-  el.innerHTML = soloUsersCache.map(u => `<option value="${u.uid}">${u.name}</option>`).join('');
+  const users = [...soloUsersCache].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  el.innerHTML = users.map(u => `<option value="${u.uid}">${u.name}</option>`).join('');
+  const tagMap = {};
+  soloGroupsCache.forEach(g => (g.playerUids || []).forEach(uid => { tagMap[uid] = g.name || 'Group'; }));
+  const box = document.getElementById('soloGrPlayers_picker'); if (box) box._q = '';
+  soloPickerRender('soloGrPlayers', tagMap);
 }
 
 function soloPopulateGroupSelects() {
@@ -14315,7 +14382,7 @@ function renderSoloAdminGroupsList() {
   wrap.innerHTML = soloGroupsCache.map(g => {
     const players = (g.playerUids || []).map(uid => soloPlayerName(uid)).join(', ');
     return `<div style="display:flex;justify-content:space-between;align-items:center;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px">
-      <div><strong>${g.name}</strong><div style="font-size:12px;color:var(--text3)">${players} (${(g.playerUids || []).length} জন)</div></div>
+      <div><strong>${g.name || '(naam nei — delete kore dao)'}</strong><div style="font-size:12px;color:var(--text3)">${players} (${(g.playerUids || []).length} জন)</div></div>
       <button class="btn btn-outline" style="padding:5px 12px;font-size:11px;color:var(--red);border-color:var(--red)" onclick="deleteSoloGroup('${g.id}')">🗑️ Delete</button>
     </div>`;
   }).join('');
@@ -14331,6 +14398,7 @@ window.createSoloGroup = async function() {
   await fetch(`${SOLO_DB}/typsolo/groups.json`, { method: 'POST', body: JSON.stringify({ name, playerUids, createdAt: new Date().toISOString() }) });
   document.getElementById('soloGrName').value = '';
   sel.selectedIndex = -1;
+  soloPickerRender('soloGrPlayers');
   status.textContent = '✅ Group তৈরি হয়েছে!'; status.style.color = 'var(--green)';
   await loadSoloAdminGroups();
   setTimeout(() => status.textContent = '', 3000);
@@ -14628,6 +14696,8 @@ function soloPopulateAutoPlayers() {
   if (!el) return;
   const users = [...soloUsersCache].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   el.innerHTML = users.map(u => `<option value="${u.uid}">${u.name}</option>`).join('');
+  const abox = document.getElementById('soloAutoPlayers_picker'); if (abox) abox._q = '';
+  soloPickerRender('soloAutoPlayers');
   soloAutoCount();
 }
 
