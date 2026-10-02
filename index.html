@@ -1138,6 +1138,13 @@ select.form-input option { background: var(--card); color: var(--text); }
 .spk-row .nm{flex:1}
 .spk-tag{font-size:10.5px;font-weight:700;color:var(--text3);border:1px solid var(--border);border-radius:20px;padding:2px 8px}
 .spk-empty{padding:16px;text-align:center;font-size:13px;color:var(--text3)}
+/* Solo Tournament admin: PC only */
+.pc-only-note{display:none}
+@media (pointer: coarse), (max-width: 820px) {
+  .pc-only-admin{display:none !important}
+  #adminTab-solotourney > *{display:none !important}
+  #adminTab-solotourney > .pc-only-note{display:block !important;padding:22px 18px;text-align:center;font-size:14px;font-weight:700;color:var(--text3);border:1px dashed var(--border);border-radius:12px}
+}
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
@@ -3327,7 +3334,7 @@ if (document.readyState === 'loading') {
         <div class="admin-tab" onclick="switchAdminTab('resultmgmt')">📤 Result Requests <span id="pendingResultCount" style="background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:11px;margin-left:4px">0</span></div>
         <div class="admin-tab" style="display:none" onclick="switchAdminTab('tournament')">🏟️ Tournament</div>
         <div class="admin-tab" style="display:none" onclick="switchAdminTab('fourman')">👥 4-Man Tournament</div>
-        <div class="admin-tab" onclick="switchAdminTab('solotourney')">🎮 Solo Tournament</div>
+        <div class="admin-tab pc-only-admin" onclick="switchAdminTab('solotourney')">🎮 Solo Tournament</div>
         <div class="admin-tab" style="display:none" onclick="switchAdminTab('matchdayctrl')">🗓️ Matchday Control</div>
         <div class="admin-tab" onclick="switchAdminTab('notice')">📢 Notice</div>
         <div class="admin-tab" style="display:none" onclick="switchAdminTab('boutdraw')">🎲 Bout Draw</div>
@@ -4210,6 +4217,7 @@ if (document.readyState === 'loading') {
 
 <!-- ══════════════ SOLO TOURNAMENT (ADMIN) ══════════════ -->
 <div class="admin-section" id="adminTab-solotourney">
+  <div class="pc-only-note">🖥️ Solo Tournament admin shudhu PC/laptop theke kaj korbe. Mobile-e open kora jabe na.</div>
   <div class="trn-admin-section" style="border:1.5px solid var(--gold)">
     <div class="trn-admin-section-title">Auto Tournament (24 / 32 Player)</div>
     <p style="font-size:13px;color:var(--text3);margin-bottom:14px">24 player = 4 group x 6 (top 4 ashbe) &middot; 32 player = 8 group x 4 (top 2 ashbe). Duita format-i 16 jon knockout-e jay: Round of 16 &rarr; QF &rarr; SF (2 leg) &rarr; Final (1 leg).</p>
@@ -4218,6 +4226,16 @@ if (document.readyState === 'loading') {
       <label class="form-label">Players — ঠিক ২৪ বা ৩২ জন সিলেক্ট করো (নামে ট্যাপ করলেই হবে)</label>
       <div id="soloAutoCount" style="margin:2px 0 10px;font-size:14px;font-weight:700"></div>
       <select class="form-input" id="soloAutoPlayers" multiple size="12" style="display:none" onchange="soloAutoCount()"></select>
+    </div>
+    <div class="form-group" style="border:1px dashed var(--gold);border-radius:12px;padding:12px">
+      <label class="form-label">📌 Fixed Group (optional) — কিছু player নির্দিষ্ট group-এ আটকে দাও, বাকিরা random</label>
+      <select class="form-input" id="soloFixedGroup" style="max-width:260px;margin-bottom:10px">
+        <option value="">-- কোনো fixed group নেই --</option>
+        <option value="0">Group A</option><option value="1">Group B</option><option value="2">Group C</option><option value="3">Group D</option>
+        <option value="4">Group E</option><option value="5">Group F</option><option value="6">Group G</option><option value="7">Group H</option>
+      </select>
+      <div id="soloFixedCount" style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text3)"></div>
+      <select class="form-input" id="soloFixedPlayers" multiple size="6" style="display:none" onchange="soloFixedChanged()"></select>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn btn-gold" onclick="soloAutoDraw()" style="padding:9px 20px;font-size:13px">1. Random Draw + Fixtures</button>
@@ -8206,7 +8224,7 @@ window.switchAdminTab = function(tab) {
   }
   if (tab === 'tournament') { loadTrnAdminTeams(); if (typeof loadTrnStatsAdminList === 'function') loadTrnStatsAdminList(); }
   if (tab === 'fourman' && typeof loadF4mAdminSquads === 'function') { loadF4mAdminSquads(); loadF4mAdminMatchdays(); if (typeof loadF4mStatsAdminList === 'function') loadF4mStatsAdminList(); }
-  if (tab === 'solotourney' && typeof loadSoloAdminGroups === 'function') { loadSoloAdminGroups(); loadSoloAdminMatches(); loadSoloAdminKnockout(); }
+  if (tab === 'solotourney' && !window.matchMedia('(pointer: coarse), (max-width: 820px)').matches && typeof loadSoloAdminGroups === 'function') { loadSoloAdminGroups(); loadSoloAdminMatches(); loadSoloAdminKnockout(); }
   if (tab === 'matchdayctrl' && typeof loadMatchdayControlList === 'function') loadMatchdayControlList();
   if (tab === 'aiqa' && typeof loadAdminAiQa === 'function') loadAdminAiQa();
   if (tab === 'typadmins' && typeof loadTypAdminsAdminList === 'function') loadTypAdminsAdminList();
@@ -14689,8 +14707,30 @@ function soloPopulateAutoPlayers() {
   el.innerHTML = users.map(u => `<option value="${u.uid}"${keep.has(u.uid) ? ' selected' : ''}>${u.name}</option>`).join('');
   const abox = document.getElementById('soloAutoPlayers_picker'); if (abox) abox._q = '';
   soloPickerRender('soloAutoPlayers');
+  const fx = document.getElementById('soloFixedPlayers');
+  if (fx) {
+    const fkeep = new Set(Array.from(fx.selectedOptions).map(o => o.value));
+    fx.innerHTML = users.map(u => `<option value="${u.uid}"${fkeep.has(u.uid) ? ' selected' : ''}>${u.name}</option>`).join('');
+    const fbox = document.getElementById('soloFixedPlayers_picker'); if (fbox) fbox._q = '';
+    soloPickerRender('soloFixedPlayers');
+  }
   soloAutoCount();
+  soloFixedChanged(true);
 }
+
+window.soloFixedChanged = function(skipSync) {
+  const fx = document.getElementById('soloFixedPlayers');
+  const main = document.getElementById('soloAutoPlayers');
+  const c = document.getElementById('soloFixedCount');
+  if (!fx || !main) return;
+  const fixed = new Set(Array.from(fx.selectedOptions).map(o => o.value));
+  if (!skipSync && fixed.size) {
+    // fixed players must also be part of the tournament: auto-select them in the main list
+    Array.from(main.options).forEach(o => { if (fixed.has(o.value)) o.selected = true; });
+    soloPickerRender('soloAutoPlayers'); soloAutoCount();
+  }
+  if (c) c.textContent = fixed.size ? `📌 ${fixed.size} jon fixed` : '';
+};
 
 window.soloAutoCount = function() {
   const el = document.getElementById('soloAutoPlayers');
@@ -14741,12 +14781,24 @@ window.soloAutoDraw = async function() {
   const warn = doneCnt ? `\n\n⚠️ ${doneCnt} ta match-er result already dewa ache — shob muche jabe!` : '';
   if (!confirm(`Ager shob group, fixture, knockout delete hoye jabe. ${fmt.players} player-er notun draw korbo?${warn}`)) return;
   st.textContent = 'Drawing...'; st.style.color = 'var(--text3)';
-  const shuffled = soloShuffle(uids);
+  // Fixed group: pin chosen players into one group, shuffle the rest into remaining slots
+  const fixedUids = Array.from(document.getElementById('soloFixedPlayers').selectedOptions).map(o => o.value);
+  const fgVal = document.getElementById('soloFixedGroup').value;
+  const fixedGi = fgVal === '' ? -1 : parseInt(fgVal);
+  if (fixedUids.length && fixedGi < 0) { st.textContent = '❌ Fixed player select korechho — kon Group-e fixed hobe ta bachai korun.'; st.style.color = 'var(--red)'; return; }
+  if (fixedGi >= fmt.groups) { st.textContent = `❌ ${fmt.players} player-e shudhu ${fmt.groups} ta group (A-${String.fromCharCode(64 + fmt.groups)}). Fixed group ta ekhane nai.`; st.style.color = 'var(--red)'; return; }
+  if (fixedUids.length > fmt.groupSize) { st.textContent = `❌ Ekta group-e max ${fmt.groupSize} jon thakte pare, tumi ${fixedUids.length} jon fixed korechho.`; st.style.color = 'var(--red)'; return; }
+  if (fixedUids.some(u => !uids.includes(u))) { st.textContent = '❌ Fixed player ra main player list-e nai.'; st.style.color = 'var(--red)'; return; }
+  const restPool = soloShuffle(uids.filter(u => !fixedUids.includes(u)));
+  const slots = [];
+  for (let gi = 0; gi < fmt.groups; gi++) {
+    slots.push(gi === fixedGi ? fixedUids.concat(restPool.splice(0, fmt.groupSize - fixedUids.length)) : restPool.splice(0, fmt.groupSize));
+  }
   const groups = {}, matches = {};
   const now = new Date().toISOString();
   for (let gi = 0; gi < fmt.groups; gi++) {
     const gid = 'g' + (gi + 1);
-    const playerUids = shuffled.slice(gi * fmt.groupSize, (gi + 1) * fmt.groupSize);
+    const playerUids = slots[gi];
     groups[gid] = { name: 'Group ' + String.fromCharCode(65 + gi), playerUids, createdAt: now };
     let n = 0;
     soloRoundRobin(playerUids).forEach((md, r) => md.forEach(([p1, p2]) => {
