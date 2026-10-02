@@ -14774,7 +14774,13 @@ window.soloAutoDraw = async function() {
   const uids = Array.from(document.getElementById('soloAutoPlayers').selectedOptions).map(o => o.value);
   const key = String(uids.length);
   const fmt = SOLO_FORMATS[key];
-  if (!fmt) { st.textContent = `Thik 24 ba 32 jon player select korun (ekhon ${uids.length})`; st.style.color = 'var(--red)'; return; }
+  if (!fmt) {
+    const target = uids.length < 24 ? 24 : 32;
+    const fx = document.getElementById('soloFixedPlayers');
+    const fxN = fx ? Array.from(fx.selectedOptions).length : 0;
+    st.textContent = `❌ Total 24 ba 32 jon player lagbe, ekhon ${uids.length} jon select${fxN ? ` (fixed ${fxN} jon shoho)` : ''}. Upor-er Players list theke baki ${uids.length < 32 && uids.length > 24 ? '(32 hole ' + (32 - uids.length) + ' jon aro, ba 24 hole ' + (uids.length - 24) + ' jon bad)' : (target - uids.length) + ' jon'} select korun — fixed box shudhu bole kon player kon group-e thakbe.`;
+    st.style.color = 'var(--red)'; return;
+  }
   document.getElementById('soloAutoFormat').value = key;
   await fetchSoloData();
   const doneCnt = soloMatchesCache.filter(m => m.status === 'completed').length;
