@@ -4221,6 +4221,7 @@ if (document.readyState === 'loading') {
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn btn-gold" onclick="soloAutoDraw()" style="padding:9px 20px;font-size:13px">1. Random Draw + Fixtures</button>
+      <button class="btn btn-outline" onclick="soloReDraw()" style="padding:9px 20px;font-size:13px">🔄 Re-draw (same players)</button>
       <button class="btn btn-gold" onclick="soloGenerateFirstKnockout()" style="padding:9px 20px;font-size:13px">2. Generate Round of 16</button>
       <button class="btn btn-gold" onclick="soloGenerateNextKnockoutRound()" style="padding:9px 20px;font-size:13px">3. Generate Next Round</button>
     </div>
@@ -14121,12 +14122,17 @@ let soloKnockoutCache = [];
 let soloUsersCache = [];
 
 async function fetchSoloData() {
-  const [groupsRes, matchesRes, koRes, cfgRes] = await Promise.all([
+  let [groupsRes, matchesRes, koRes, cfgRes] = await Promise.all([
     fetch(`${SOLO_DB}/typsolo/groups.json`).then(r => r.json()),
     fetch(`${SOLO_DB}/typsolo/matches.json`).then(r => r.json()),
     fetch(`${SOLO_DB}/typsolo/knockout.json`).then(r => r.json()),
     fetch(`${SOLO_DB}/typsolo/config.json`).then(r => r.json())
   ]);
+  // Firebase returns {"error":"Permission denied"} when rules block the path — don't treat that as data
+  const soloBlocked = [groupsRes, matchesRes, koRes, cfgRes].find(r => r && typeof r === 'object' && typeof r.error === 'string');
+  window.soloPermError = soloBlocked ? soloBlocked.error : null;
+  const _ok = r => (r && !(typeof r.error === 'string' && Object.keys(r).length === 1)) ? r : null;
+  groupsRes = _ok(groupsRes); matchesRes = _ok(matchesRes); koRes = _ok(koRes); cfgRes = _ok(cfgRes);
   soloGroupsCache = groupsRes ? Object.entries(groupsRes).map(([id, v]) => ({ id, ...v })) : [];
   soloMatchesCache = matchesRes ? Object.entries(matchesRes).map(([id, v]) => ({ id, ...v })) : [];
   soloKnockoutCache = koRes ? Object.entries(koRes).map(([id, v]) => ({ id, ...v })) : [];
@@ -14361,6 +14367,7 @@ function soloPopulateGroupSelects() {
 function renderSoloAdminGroupsList() {
   const wrap = document.getElementById('soloAdminGroupsList');
   if (!wrap) return;
+  if (window.soloPermError) { wrap.innerHTML = `<div style="color:var(--red);font-size:13px;font-weight:700">❌ Firebase Rules "typsolo" read/write block korche (${window.soloPermError}). Rules-e typsolo allow korun.</div>`; return; }
   if (!soloGroupsCache.length) { wrap.innerHTML = `<div style="color:var(--text3);font-size:13px">এখনো কোনো group নেই।</div>`; return; }
   wrap.innerHTML = soloGroupsCache.map(g => {
     const players = (g.playerUids || []).map(uid => soloPlayerName(uid)).join(', ');
@@ -14678,7 +14685,8 @@ function soloPopulateAutoPlayers() {
   const el = document.getElementById('soloAutoPlayers');
   if (!el) return;
   const users = [...soloUsersCache].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-  el.innerHTML = users.map(u => `<option value="${u.uid}">${u.name}</option>`).join('');
+  const keep = new Set(Array.from(el.selectedOptions).map(o => o.value));
+  el.innerHTML = users.map(u => `<option value="${u.uid}"${keep.has(u.uid) ? ' selected' : ''}>${u.name}</option>`).join('');
   const abox = document.getElementById('soloAutoPlayers_picker'); if (abox) abox._q = '';
   soloPickerRender('soloAutoPlayers');
   soloAutoCount();
@@ -14707,6 +14715,19 @@ function soloShuffle(a) {
   return arr;
 }
 
+// Re-draw: reshuffle the players already in the groups (no need to reselect)
+window.soloReDraw = async function() {
+  const st = document.getElementById('soloAutoStatus');
+  await fetchSoloData();
+  const uids = [].concat(...soloGroupsCache.map(g => g.playerUids || []));
+  if (!SOLO_FORMATS[String(uids.length)]) { st.textContent = 'Age ekbar Random Draw korun — tarpor Re-draw kaj korbe.'; st.style.color = 'var(--red)'; return; }
+  const sel = document.getElementById('soloAutoPlayers');
+  const set = new Set(uids);
+  Array.from(sel.options).forEach(o => { o.selected = set.has(o.value); });
+  soloPickerRender('soloAutoPlayers'); soloAutoCount();
+  await soloAutoDraw();
+};
+
 //  ADMIN: Random group draw + all group fixtures in one click
 window.soloAutoDraw = async function() {
   const st = document.getElementById('soloAutoStatus');
@@ -14715,7 +14736,10 @@ window.soloAutoDraw = async function() {
   const fmt = SOLO_FORMATS[key];
   if (!fmt) { st.textContent = `Thik 24 ba 32 jon player select korun (ekhon ${uids.length})`; st.style.color = 'var(--red)'; return; }
   document.getElementById('soloAutoFormat').value = key;
-  if (!confirm(`Ager shob group, fixture, knockout delete hoye jabe. ${fmt.players} player-er notun draw korbo?`)) return;
+  await fetchSoloData();
+  const doneCnt = soloMatchesCache.filter(m => m.status === 'completed').length;
+  const warn = doneCnt ? `\n\n⚠️ ${doneCnt} ta match-er result already dewa ache — shob muche jabe!` : '';
+  if (!confirm(`Ager shob group, fixture, knockout delete hoye jabe. ${fmt.players} player-er notun draw korbo?${warn}`)) return;
   st.textContent = 'Drawing...'; st.style.color = 'var(--text3)';
   const shuffled = soloShuffle(uids);
   const groups = {}, matches = {};
@@ -14730,7 +14754,8 @@ window.soloAutoDraw = async function() {
     }));
   }
   const config = { format: key, players: fmt.players, groups: fmt.groups, groupSize: fmt.groupSize, qual: fmt.qual, createdAt: now };
-  await fetch(`${SOLO_DB}/typsolo.json`, { method: 'PUT', body: JSON.stringify({ config, groups, matches }) });
+  const putRes = await fetch(`${SOLO_DB}/typsolo.json`, { method: 'PUT', body: JSON.stringify({ config, groups, matches }) });
+  if (!putRes.ok) { st.textContent = `❌ Save hoyni (Firebase: ${putRes.status} Permission denied). Firebase Rules-e "typsolo" er .read/.write true korun.`; st.style.color = 'var(--red)'; return; }
   st.textContent = `Done! ${fmt.groups} group, ${Object.keys(matches).length} match generate hoyeche.`; st.style.color = 'var(--green)';
   await loadSoloAdminGroups();
   await loadSoloAdminMatches();
