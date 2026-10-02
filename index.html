@@ -4227,20 +4227,8 @@ if (document.readyState === 'loading') {
     <span id="soloAutoStatus" style="font-size:13px;display:block;margin-top:10px"></span>
   </div>
   <div class="trn-admin-section">
-    <div class="trn-admin-section-title">👥 Create Group</div>
-    <p style="font-size:13px;color:var(--text3);margin-bottom:14px">যত ইচ্ছা group বানাও, প্রতি group-এ যত জন খুশি player রাখো (নামের উপর ট্যাপ করে একাধিক player সিলেক্ট করো)। Group stage single round-robin হবে — group-এর মধ্যে সবাই সবার সাথে একবার করে খেলবে।</p>
-    <div class="form-group">
-      <label class="form-label">Group Name</label>
-      <input class="form-input" id="soloGrName" placeholder="e.g. Group A">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Players (নামের উপর ট্যাপ/ক্লিক করলেই সিলেক্ট হবে)</label>
-      <select class="form-input" id="soloGrPlayers" multiple size="8" style="display:none"></select>
-    </div>
-    <button class="btn btn-gold" onclick="createSoloGroup()" style="padding:9px 22px;font-size:13px">➕ Group Create করো</button>
-    <span id="soloGrStatus" style="margin-left:12px;font-size:13px"></span>
-
-    <div style="font-size:13px;font-weight:700;color:var(--text2);margin:20px 0 10px;border-top:1px solid var(--border);padding-top:16px">📋 সব Group</div>
+    <div class="trn-admin-section-title">📋 সব Group</div>
+    <p style="font-size:13px;color:var(--text3);margin-bottom:14px">Random Draw করলে Group A, B, C, D... নাম দিয়ে অটো তৈরি হয়ে যায়। এখানে শুধু দেখা ও delete করা যাবে।</p>
     <div id="soloAdminGroupsList" style="margin-bottom:8px"><div style="color:var(--text3);font-size:13px">লোড হচ্ছে...</div></div>
     <button class="btn btn-outline" onclick="loadSoloAdminGroups()" style="padding:8px 18px;font-size:12px">🔄 Reload</button>
   </div>
