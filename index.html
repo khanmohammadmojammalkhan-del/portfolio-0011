@@ -4081,6 +4081,10 @@ if (document.readyState === 'loading') {
       <button class="btn btn-gold" onclick="generateSoloGroupFixtures()" style="padding:9px 20px;font-size:13px">📅 Generate Fixtures</button>
     </div>
     <span id="soloGenStatus" style="font-size:13px;display:block;margin-top:8px"></span>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--border)">
+      <button class="btn btn-outline" onclick="soloRepairStats()" style="padding:8px 16px;font-size:12px">🛠️ Repair Solo Stats (double count fix)</button>
+      <span id="soloRepairStatus" style="font-size:12px;display:block;margin-top:6px;color:var(--text3)"></span>
+    </div>
   </div>
 
   <div class="trn-admin-section">
@@ -14250,6 +14254,10 @@ window.generateSoloGroupFixtures = async function() {
 
   // Remove existing matches for this group first (regenerate clean)
   const existing = soloMatchesCache.filter(m => m.groupId === groupId);
+  const doneOnes = existing.filter(m => m.status === 'completed');
+  if (doneOnes.length && !confirm(`এই group-এ ${doneOnes.length}টা completed match আছে। Regenerate করলে এগুলোর result মুছে যাবে (player stats-ও revert হবে)। Continue?`)) { status.textContent = ''; return; }
+  for (const m of doneOnes) await soloRevertMatchStats(m);
+  window._allUsersCache = [];
   for (const m of existing) { await fetch(`${SOLO_DB}/typsolo/matches/${m.id}.json`, { method: 'DELETE' }); }
 
   const players = g.playerUids;
@@ -14318,7 +14326,14 @@ window.saveSoloMatchResult = async function(mid) {
   const allUsers = await getAllUsers();
   const userMap = {}; allUsers.forEach(u => userMap[u.uid] = u);
   const p1 = m.player1Uid, p2 = m.player2Uid;
-  if (!alreadyCompleted && userMap[p1] && userMap[p2]) {
+  if (userMap[p1] && userMap[p2]) {
+    if (alreadyCompleted) {
+      // score edit: age-r result revert kore notun result apply (double count hobe na)
+      await soloRevertMatchStats(m);
+      window._allUsersCache = [];
+      const fresh = await getAllUsers();
+      fresh.forEach(u => userMap[u.uid] = u);
+    }
     const result1 = score1 > score2 ? 'w' : score1 < score2 ? 'l' : 'd';
     const result2 = score2 > score1 ? 'w' : score2 < score1 ? 'l' : 'd';
     await soloApplyPlayerStat(userMap[p1], p1, score1, result1);
@@ -14333,6 +14348,66 @@ window.saveSoloMatchResult = async function(mid) {
   window._allUsersCache = [];
   statusEl.textContent = '✅ Saved! Player profile updated.'; statusEl.style.color = 'var(--green)';
   await loadSoloAdminMatches();
+};
+
+// ── Revert a completed match's effect from both players' stats (overall + statsSolo) ──
+async function soloRevertPlayerStat(uid, goalsFor, result) {
+  const res = await fetch(`${SOLO_DB}/users/${uid}.json`);
+  const u = await res.json();
+  if (!u) return;
+  const dec = (v, by) => Math.max(0, (v || 0) - by);
+  const w = result === 'w' ? 1 : 0, d = result === 'd' ? 1 : 0, l = result === 'l' ? 1 : 0;
+  await fetch(`${SOLO_DB}/users/${uid}.json`, { method: 'PATCH', body: JSON.stringify({
+    matches: dec(u.matches, 1), wins: dec(u.wins, w), draws: dec(u.draws, d), losses: dec(u.losses, l), goalsFor: dec(u.goalsFor, goalsFor)
+  }) });
+  const ss = u.statsSolo || { matches: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0 };
+  await fetch(`${SOLO_DB}/users/${uid}/statsSolo.json`, { method: 'PUT', body: JSON.stringify({
+    matches: dec(ss.matches, 1), wins: dec(ss.wins, w), draws: dec(ss.draws, d), losses: dec(ss.losses, l), goalsFor: dec(ss.goalsFor, goalsFor)
+  }) });
+}
+async function soloRevertMatchStats(m) {
+  if (!m || m.status !== 'completed' || m.player1Score == null || m.player2Score == null) return;
+  const a = m.player1Score, b = m.player2Score;
+  await soloRevertPlayerStat(m.player1Uid, a, a > b ? 'w' : a < b ? 'l' : 'd');
+  await soloRevertPlayerStat(m.player2Uid, b, b > a ? 'w' : b < a ? 'l' : 'd');
+}
+
+// ── One-time repair: statsSolo ke actual completed matches theke recalc kore, extra ta overall theke bad dey ──
+window.soloRepairStats = async function() {
+  const st = document.getElementById('soloRepairStatus');
+  st.textContent = '⏳ Checking...';
+  await fetchSoloData();
+  const exp = {};
+  const add = (uid, gf, r) => {
+    const e = exp[uid] || (exp[uid] = { matches: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0 });
+    e.matches++; e.goalsFor += gf; if (r === 'w') e.wins++; else if (r === 'd') e.draws++; else e.losses++;
+  };
+  [...soloMatchesCache, ...soloKnockoutCache].forEach(m => {
+    if (m.status !== 'completed' || m.player1Score == null || m.player2Score == null) return;
+    const a = m.player1Score, b = m.player2Score;
+    add(m.player1Uid, a, a > b ? 'w' : a < b ? 'l' : 'd');
+    add(m.player2Uid, b, b > a ? 'w' : b < a ? 'l' : 'd');
+  });
+  window._allUsersCache = [];
+  const users = await getAllUsers();
+  const keys = ['matches', 'wins', 'draws', 'losses', 'goalsFor'];
+  const fixes = [];
+  users.forEach(u => {
+    const cur = u.statsSolo || { matches: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0 };
+    const e = exp[u.uid] || { matches: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0 };
+    if (keys.some(k => (cur[k] || 0) !== e[k])) fixes.push({ u, cur, e });
+  });
+  if (!fixes.length) { st.textContent = '✅ Kono mismatch nei, shob thik ache.'; return; }
+  const msg = fixes.map(f => `${f.u.name}: matches ${f.cur.matches || 0} → ${f.e.matches}, goals ${f.cur.goalsFor || 0} → ${f.e.goalsFor}`).join('\n');
+  if (!confirm(`${fixes.length} জন player-এর Solo stats ঠিক করা হবে:\n\n${msg}\n\nঅনুমতি দিলে overall stats থেকেও এই পার্থক্য বাদ যাবে। Continue?`)) { st.textContent = 'Cancelled.'; return; }
+  for (const { u, cur, e } of fixes) {
+    const diff = {}; keys.forEach(k => diff[k] = (cur[k] || 0) - e[k]);
+    const overall = {}; keys.forEach(k => overall[k] = Math.max(0, (u[k] || 0) - diff[k]));
+    await fetch(`${SOLO_DB}/users/${u.uid}.json`, { method: 'PATCH', body: JSON.stringify(overall) });
+    await fetch(`${SOLO_DB}/users/${u.uid}/statsSolo.json`, { method: 'PUT', body: JSON.stringify(e) });
+  }
+  window._allUsersCache = [];
+  st.textContent = `✅ ${fixes.length} জন player-এর stats ঠিক হয়েছে।`; st.style.color = 'var(--green)';
 };
 
 async function soloApplyPlayerStat(base, uid, goalsFor, result) {
@@ -14400,6 +14475,8 @@ window.createSoloKnockoutMatch = async function() {
 
 window.deleteSoloKnockoutMatch = async function(id) {
   if (!confirm('এই knockout match delete করতে চাও?')) return;
+  const km = soloKnockoutCache.find(x => x.id === id);
+  if (km && km.status === 'completed') { await soloRevertMatchStats(km); window._allUsersCache = []; }
   await fetch(`${SOLO_DB}/typsolo/knockout/${id}.json`, { method: 'DELETE' });
   await fetchSoloData();
   renderSoloAdminKnockoutList();
@@ -14420,7 +14497,13 @@ window.saveSoloKnockoutResult = async function(id) {
     const allUsers = await getAllUsers();
     const userMap = {}; allUsers.forEach(u => userMap[u.uid] = u);
     const p1 = m.player1Uid, p2 = m.player2Uid;
-    if (!alreadyCompleted && userMap[p1] && userMap[p2]) {
+    if (userMap[p1] && userMap[p2]) {
+      if (alreadyCompleted) {
+        await soloRevertMatchStats(m);
+        window._allUsersCache = [];
+        const fresh = await getAllUsers();
+        fresh.forEach(u => userMap[u.uid] = u);
+      }
       const result1 = score1 > score2 ? 'w' : score1 < score2 ? 'l' : 'd';
       const result2 = score2 > score1 ? 'w' : score2 < score1 ? 'l' : 'd';
       await soloApplyPlayerStat(userMap[p1], p1, score1, result1);
