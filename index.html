@@ -14309,7 +14309,7 @@ window.loadSoloMatchForEntry = function() {
     </div>`;
 };
 
-window.saveSoloMatchResult = async function(mid) {
+async function _saveSoloMatchResultImpl(mid) {
   const statusEl = document.getElementById('soloMatchSaveStatus');
   const s1 = document.getElementById('soloScore1').value.trim();
   const s2 = document.getElementById('soloScore2').value.trim();
@@ -14321,12 +14321,12 @@ window.saveSoloMatchResult = async function(mid) {
   const alreadyLogged = !!m.historyLogged;
   const score1 = parseInt(s1), score2 = parseInt(s2);
 
-  await fetch(`${SOLO_DB}/typsolo/matches/${mid}.json`, { method: 'PATCH', body: JSON.stringify({ player1Score: score1, player2Score: score2, status: 'completed', historyLogged: true, updatedAt: new Date().toISOString() }) });
 
   const allUsers = await getAllUsers();
   const userMap = {}; allUsers.forEach(u => userMap[u.uid] = u);
   const p1 = m.player1Uid, p2 = m.player2Uid;
-  if (userMap[p1] && userMap[p2]) {
+  if (!userMap[p1] || !userMap[p2]) { statusEl.textContent = '⚠️ Player পাওয়া যায়নি — সেভ হয়নি।'; statusEl.style.color = 'var(--red)'; return; }
+  {
     if (alreadyCompleted) {
       // score edit: age-r result revert kore notun result apply (double count hobe na)
       await soloRevertMatchStats(m);
@@ -14339,6 +14339,7 @@ window.saveSoloMatchResult = async function(mid) {
     await soloApplyPlayerStat(userMap[p1], p1, score1, result1);
     await soloApplyPlayerStat(userMap[p2], p2, score2, result2);
   }
+  await fetch(`${SOLO_DB}/typsolo/matches/${mid}.json`, { method: 'PATCH', body: JSON.stringify({ player1Score: score1, player2Score: score2, status: 'completed', statsApplied: true, historyLogged: true, updatedAt: new Date().toISOString() }) });
   if (!alreadyLogged && userMap[p1] && userMap[p2]) {
     typRecordMatchHistory({
       homeName: userMap[p1].name, awayName: userMap[p2].name,
@@ -14348,6 +14349,10 @@ window.saveSoloMatchResult = async function(mid) {
   window._allUsersCache = [];
   statusEl.textContent = '✅ Saved! Player profile updated.'; statusEl.style.color = 'var(--green)';
   await loadSoloAdminMatches();
+}
+window.saveSoloMatchResult = function(mid) {
+  window._soloSaveQ = (window._soloSaveQ || Promise.resolve()).then(() => _saveSoloMatchResultImpl(mid)).catch(e => { console.error(e); alert('Save fail: ' + e.message); });
+  return window._soloSaveQ;
 };
 
 // ── Revert a completed match's effect from both players' stats (overall + statsSolo) ──
@@ -14367,6 +14372,7 @@ async function soloRevertPlayerStat(uid, goalsFor, result) {
 }
 async function soloRevertMatchStats(m) {
   if (!m || m.status !== 'completed' || m.player1Score == null || m.player2Score == null) return;
+  if (m.statsApplied === false) return;
   const a = m.player1Score, b = m.player2Score;
   await soloRevertPlayerStat(m.player1Uid, a, a > b ? 'w' : a < b ? 'l' : 'd');
   await soloRevertPlayerStat(m.player2Uid, b, b > a ? 'w' : b < a ? 'l' : 'd');
@@ -14411,23 +14417,14 @@ window.soloRepairStats = async function() {
 };
 
 async function soloApplyPlayerStat(base, uid, goalsFor, result) {
-  const overallUpdate = {
-    matches: (base.matches || 0) + 1,
-    wins: (base.wins || 0) + (result === 'w' ? 1 : 0),
-    draws: (base.draws || 0) + (result === 'd' ? 1 : 0),
-    losses: (base.losses || 0) + (result === 'l' ? 1 : 0),
-    goalsFor: (base.goalsFor || 0) + goalsFor,
-  };
-  await fetch(`${SOLO_DB}/users/${uid}.json`, { method: 'PATCH', body: JSON.stringify(overallUpdate) });
-  const ss = base.statsSolo || { matches: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0 };
-  const ssUpdate = {
-    matches: (ss.matches || 0) + 1,
-    wins: (ss.wins || 0) + (result === 'w' ? 1 : 0),
-    draws: (ss.draws || 0) + (result === 'd' ? 1 : 0),
-    losses: (ss.losses || 0) + (result === 'l' ? 1 : 0),
-    goalsFor: (ss.goalsFor || 0) + goalsFor,
-  };
-  await fetch(`${SOLO_DB}/users/${uid}/statsSolo.json`, { method: 'PUT', body: JSON.stringify(ssUpdate) });
+  // Atomic server-side increments — cached `base` (15-min stale) use kora hoy na,
+  // tai ekai player-er ekadhik match save korleo kono match har-e na.
+  const inc = n => ({ ".sv": { "increment": n } });
+  const w = result === 'w' ? 1 : 0, d = result === 'd' ? 1 : 0, l = result === 'l' ? 1 : 0;
+  const upd = { matches: inc(1), wins: inc(w), draws: inc(d), losses: inc(l), goalsFor: inc(goalsFor) };
+  await fetch(`${SOLO_DB}/users/${uid}.json`, { method: 'PATCH', body: JSON.stringify(upd) });
+  await fetch(`${SOLO_DB}/users/${uid}/statsSolo.json`, { method: 'PATCH', body: JSON.stringify(upd) });
+  window._allUsersCache = []; window._allUsersCacheTime = 0;
 }
 
 // ── ADMIN: Knockout ──
@@ -14482,7 +14479,7 @@ window.deleteSoloKnockoutMatch = async function(id) {
   renderSoloAdminKnockoutList();
 };
 
-window.saveSoloKnockoutResult = async function(id) {
+async function _saveSoloKnockoutResultImpl(id) {
   const s1El = document.querySelector(`.solo-ko-s1[data-id="${id}"]`);
   const s2El = document.querySelector(`.solo-ko-s2[data-id="${id}"]`);
   const s1 = s1El.value.trim(), s2 = s2El.value.trim();
@@ -14491,13 +14488,13 @@ window.saveSoloKnockoutResult = async function(id) {
   const alreadyCompleted = m && m.status === 'completed';
   const alreadyLogged = m && !!m.historyLogged;
   const score1 = parseInt(s1), score2 = parseInt(s2);
-  await fetch(`${SOLO_DB}/typsolo/knockout/${id}.json`, { method: 'PATCH', body: JSON.stringify({ player1Score: score1, player2Score: score2, status: 'completed', historyLogged: true, updatedAt: new Date().toISOString() }) });
 
   if (m) {
     const allUsers = await getAllUsers();
     const userMap = {}; allUsers.forEach(u => userMap[u.uid] = u);
     const p1 = m.player1Uid, p2 = m.player2Uid;
-    if (userMap[p1] && userMap[p2]) {
+    if (!userMap[p1] || !userMap[p2]) { alert('⚠️ Player খুঁজে পাওয়া যায়নি — result সেভ হয়নি। Sync করে আবার চেষ্টা করো।'); return; }
+    {
       if (alreadyCompleted) {
         await soloRevertMatchStats(m);
         window._allUsersCache = [];
@@ -14516,10 +14513,16 @@ window.saveSoloKnockoutResult = async function(id) {
       });
     }
   }
+  await fetch(`${SOLO_DB}/typsolo/knockout/${id}.json`, { method: 'PATCH', body: JSON.stringify({ player1Score: score1, player2Score: score2, status: 'completed', statsApplied: true, historyLogged: true, updatedAt: new Date().toISOString() }) });
   window._allUsersCache = [];
   await fetchSoloData();
   await soloCheckTiePens(id);
   renderSoloAdminKnockoutList();
+}
+window.saveSoloKnockoutResult = function(id) {
+  // Ek-ek kore queue-te chalay — onek 💾 ek sathe chaple race hoye stats har-e na
+  window._soloSaveQ = (window._soloSaveQ || Promise.resolve()).then(() => _saveSoloKnockoutResultImpl(id)).catch(e => { console.error(e); alert('Save fail: ' + e.message); });
+  return window._soloSaveQ;
 };
 
 //  SOLO AUTO FORMAT: 24 (4x6, top 4) / 32 (8x4, top 2) -> Round of 16 -> QF -> SF (2 legs) -> Final (1 leg)
