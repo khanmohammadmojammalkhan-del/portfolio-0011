@@ -4063,6 +4063,7 @@ if (document.readyState === 'loading') {
       <button class="btn btn-outline" onclick="soloReDraw()" style="padding:9px 20px;font-size:13px">🔄 Re-draw (same players)</button>
       <button class="btn btn-gold" onclick="soloGenerateFirstKnockout()" style="padding:9px 20px;font-size:13px">2. Generate Round of 16</button>
       <button class="btn btn-gold" onclick="soloGenerateNextKnockoutRound()" style="padding:9px 20px;font-size:13px">3. Generate Next Round</button>
+      <button class="btn btn-outline" onclick="soloResetKnockoutStageResults('R16')" style="padding:9px 20px;font-size:13px;color:var(--red);border-color:var(--red)">🧹 Reset Round of 16 Results</button>
     </div>
     <span id="soloAutoStatus" style="font-size:13px;display:block;margin-top:10px"></span>
   </div>
@@ -14484,7 +14485,14 @@ async function _saveSoloKnockoutResultImpl(id) {
   const s2El = document.querySelector(`.solo-ko-s2[data-id="${id}"]`);
   const s1 = s1El.value.trim(), s2 = s2El.value.trim();
   if (s1 === '' || s2 === '') { alert('দুইটা score-ই বসাও।'); return; }
-  const m = soloKnockoutCache.find(x => x.id === id);
+  // FIX: cache na, database theke fresh doc pore — stale cache-er karone 2/3 bar stats add hoto
+  let m = null;
+  try {
+    const fr = await fetch(`${SOLO_DB}/typsolo/knockout/${id}.json`);
+    const fd = await fr.json();
+    if (fd) m = { id, ...fd };
+  } catch (e) { m = soloKnockoutCache.find(x => x.id === id); }
+  if (!m) m = soloKnockoutCache.find(x => x.id === id);
   const alreadyCompleted = m && m.status === 'completed';
   const alreadyLogged = m && !!m.historyLogged;
   const score1 = parseInt(s1), score2 = parseInt(s2);
@@ -14520,8 +14528,17 @@ async function _saveSoloKnockoutResultImpl(id) {
   renderSoloAdminKnockoutList();
 }
 window.saveSoloKnockoutResult = function(id) {
+  // FIX: ekta match-er save cholar shomoy abar click korle ignore (double-click / slow network e 2-3 bar save hoto)
+  window._soloKoSaving = window._soloKoSaving || {};
+  if (window._soloKoSaving[id]) return window._soloSaveQ;
+  window._soloKoSaving[id] = true;
+  const btn = document.querySelector(`button[onclick="saveSoloKnockoutResult('${id}')"]`);
+  if (btn) { btn.disabled = true; btn.style.opacity = '.5'; btn.textContent = '⏳'; }
   // Ek-ek kore queue-te chalay — onek 💾 ek sathe chaple race hoye stats har-e na
-  window._soloSaveQ = (window._soloSaveQ || Promise.resolve()).then(() => _saveSoloKnockoutResultImpl(id)).catch(e => { console.error(e); alert('Save fail: ' + e.message); });
+  window._soloSaveQ = (window._soloSaveQ || Promise.resolve())
+    .then(() => _saveSoloKnockoutResultImpl(id))
+    .catch(e => { console.error(e); alert('Save fail: ' + e.message); })
+    .finally(() => { delete window._soloKoSaving[id]; renderSoloAdminKnockoutList(); });
   return window._soloSaveQ;
 };
 
@@ -14739,6 +14756,71 @@ function soloMakeTie(stage, tIndex, teamA, teamB) {
   }
   return out;
 }
+
+//  ADMIN: Reset all results of a knockout stage (default R16) — stats + match history + scores
+window.soloResetKnockoutStageResults = async function(stageKey) {
+  stageKey = stageKey || 'R16';
+  const st = document.getElementById('soloAutoStatus');
+  await fetchSoloData();
+  const docs = soloKnockoutCache.filter(m => m.stage === stageKey);
+  if (!docs.length) { st.textContent = 'Ei round-e kono match nei'; st.style.color = 'var(--red)'; return; }
+  const touched = docs.filter(m => m.status === 'completed' || m.player1Score != null || m.player2Score != null || m.pensWinner || m.statsApplied || m.historyLogged);
+  if (!touched.length) { st.textContent = 'Reset korar moto kono result nei'; st.style.color = 'var(--green)'; return; }
+  if (!confirm(`${stageKey}-er ${touched.length}টা leg-এর result মুছে ফেলা হবে:\n• সব score reset হবে\n• Player profile stats (match/win/draw/loss/goal) ঠিক হবে\n• Match history থেকে এই round-এর entry delete হবে\n\nFixture থাকবে, তুমি নতুন করে result add করবে। Continue?`)) { st.textContent = 'Cancelled.'; return; }
+  st.textContent = '⏳ Resetting...'; st.style.color = 'var(--text3)';
+  try {
+    // 1) Match history delete (ei round-er pair gulo, 'Solo Knockout')
+    const pairKeys = new Set();
+    const nameOf = uid => soloPlayerName(uid);
+    docs.forEach(m => { const a = nameOf(m.player1Uid), b = nameOf(m.player2Uid); pairKeys.add(a + '|' + b); pairKeys.add(b + '|' + a); });
+    const hr = await fetch(`${F4M_DB}/matches.json`);
+    const hist = (await hr.json()) || {};
+    const del = Object.entries(hist).filter(([k, v]) => v && v.tournament === 'Solo Knockout' && pairKeys.has(v.home_team + '|' + v.away_team));
+    for (const [k] of del) await fetch(`${F4M_DB}/matches/${k}.json`, { method: 'DELETE' });
+
+    // 2) Score reset (stats ta porer step-e recalc hobe)
+    for (const m of docs) {
+      await fetch(`${SOLO_DB}/typsolo/knockout/${m.id}.json`, { method: 'PATCH', body: JSON.stringify({
+        player1Score: null, player2Score: null, status: 'pending', statsApplied: null, historyLogged: null, pensWinner: null, updatedAt: new Date().toISOString()
+      }) });
+    }
+    await fetchSoloData();
+
+    // 3) Stats recalc: baki completed match (group + onno knockout) theke expected ber kore extra/duplicate bad deya
+    const exp = {};
+    const add = (uid, gf, r) => {
+      const e = exp[uid] || (exp[uid] = { matches: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0 });
+      e.matches++; e.goalsFor += gf; if (r === 'w') e.wins++; else if (r === 'd') e.draws++; else e.losses++;
+    };
+    [...soloMatchesCache, ...soloKnockoutCache].forEach(m => {
+      if (m.status !== 'completed' || m.player1Score == null || m.player2Score == null) return;
+      const a = m.player1Score, b = m.player2Score;
+      add(m.player1Uid, a, a > b ? 'w' : a < b ? 'l' : 'd');
+      add(m.player2Uid, b, b > a ? 'w' : b < a ? 'l' : 'd');
+    });
+    window._allUsersCache = []; window._allUsersCacheTime = 0;
+    const users = await getAllUsers();
+    const keys = ['matches', 'wins', 'draws', 'losses', 'goalsFor'];
+    let fixed = 0;
+    for (const u of users) {
+      const cur = u.statsSolo || { matches: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0 };
+      const e = exp[u.uid] || { matches: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0 };
+      if (!keys.some(k => (cur[k] || 0) !== e[k])) continue;
+      const overall = {}; keys.forEach(k => overall[k] = Math.max(0, (u[k] || 0) - ((cur[k] || 0) - e[k])));
+      await fetch(`${SOLO_DB}/users/${u.uid}.json`, { method: 'PATCH', body: JSON.stringify(overall) });
+      await fetch(`${SOLO_DB}/users/${u.uid}/statsSolo.json`, { method: 'PUT', body: JSON.stringify(e) });
+      fixed++;
+    }
+    window._allUsersCache = []; window._allUsersCacheTime = 0;
+    st.textContent = `✅ ${stageKey} reset হয়েছে — ${touched.length}টা leg, ${del.length}টা history entry delete, ${fixed} জন player-এর stats ঠিক হয়েছে। এখন নতুন করে result add করো।`;
+    st.style.color = 'var(--green)';
+  } catch (e) {
+    console.error(e);
+    st.textContent = '❌ Reset fail: ' + e.message; st.style.color = 'var(--red)';
+  }
+  await fetchSoloData();
+  renderSoloAdminKnockoutList();
+};
 
 //  ADMIN: Group stage -> Round of 16
 window.soloGenerateFirstKnockout = async function() {
