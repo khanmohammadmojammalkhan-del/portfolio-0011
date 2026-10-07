@@ -4039,10 +4039,41 @@ if (document.readyState === 'loading') {
 
 <!-- ══════════════ SOLO TOURNAMENT (ADMIN) ══════════════ -->
 <div class="admin-section" id="adminTab-solotourney">
+
+  <!-- 1) PROGRESS: Round of 16 -> QF -> SF -> Final, ekta button ekta step -->
   <div class="trn-admin-section" style="border:1.5px solid var(--gold)">
-    <div class="trn-admin-section-title">Auto Tournament (24 / 32 Player)</div>
-    <p style="font-size:13px;color:var(--text3);margin-bottom:14px">24 player = 4 group x 6 (top 4 ashbe) &middot; 32 player = 8 group x 4 (top 2 ashbe). Duita format-i 16 jon knockout-e jay: Round of 16 &rarr; QF &rarr; SF (2 leg) &rarr; Final (1 leg).</p>
-    <input type="hidden" id="soloAutoFormat" value="24">
+    <div class="trn-admin-section-title">🏆 Solo Tournament — Progress</div>
+    <div id="soloStageTracker" style="margin-bottom:10px"><div style="color:var(--text3);font-size:13px">লোড হচ্ছে...</div></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
+      <label style="font-size:12px;color:var(--text3)">QF / SF Draw:</label>
+      <select class="form-input" id="soloDrawMode" style="max-width:240px;padding:6px 10px;font-size:13px">
+        <option value="random">🎲 Random Draw</option>
+        <option value="bracket">📊 Bracket order (R16 ordere)</option>
+      </select>
+    </div>
+    <span id="soloAutoStatus" style="font-size:13px;display:block;margin-top:10px"></span>
+  </div>
+
+  <!-- 2) RESULT ENTRY: group + knockout ek jaygay -->
+  <div class="trn-admin-section">
+    <div class="trn-admin-section-title">⚽ Result Entry</div>
+    <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px">Group Stage</div>
+    <p style="font-size:13px;color:var(--text3);margin-bottom:14px">একটা match বাছাই করে score বসাও — Save করলে group standings ও player profile (overall + Solo breakdown) অটো আপডেট হবে।</p>
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <select class="form-input" id="soloMatchSelect" style="flex:1;min-width:220px" onchange="loadSoloMatchForEntry()"><option value="">-- Match বাছাই করো --</option></select>
+      <button class="btn btn-outline" onclick="loadSoloAdminMatches()" style="padding:9px 16px;font-size:12px">🔄 Load</button>
+    </div>
+    <div id="soloMatchEntryArea"></div>
+    <div style="font-size:13px;font-weight:700;color:var(--text2);margin:20px 0 10px;border-top:1px solid var(--border);padding-top:16px">⚡ Knockout (score বসিয়ে 💾 চাপো)</div>
+    <div id="soloAdminKnockoutList"><div style="color:var(--text3);font-size:13px">লোড হচ্ছে...</div></div>
+  </div>
+
+  <!-- 3) SETUP / ADVANCED: shuru-te ekbar lage, ba kichu bhul hole -->
+  <details class="trn-admin-section" style="padding:14px 18px">
+    <summary style="cursor:pointer;font-weight:700;font-size:13px">⚙️ Setup &amp; Advanced (Draw · Groups · Repair · Reset)</summary>
+    <div style="margin-top:16px">
+      <div class="trn-admin-section-title">🎲 Group Draw (টুর্নামেন্টের শুরুতে একবার)</div>
+      <input type="hidden" id="soloAutoFormat" value="24">
     <div class="form-group">
       <label class="form-label">Players — ঠিক ২৪ বা ৩২ জন সিলেক্ট করো (নামে ট্যাপ করলেই হবে)</label>
       <div id="soloAutoCount" style="margin:2px 0 10px;font-size:14px;font-weight:700"></div>
@@ -4059,15 +4090,21 @@ if (document.readyState === 'loading') {
       <select class="form-input" id="soloFixedPlayers" multiple size="6" style="display:none" onchange="soloFixedChanged()"></select>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn btn-gold" onclick="soloAutoDraw()" style="padding:9px 20px;font-size:13px">1. Random Draw + Fixtures</button>
-      <button class="btn btn-outline" onclick="soloReDraw()" style="padding:9px 20px;font-size:13px">🔄 Re-draw (same players)</button>
-      <button class="btn btn-gold" onclick="soloGenerateFirstKnockout()" style="padding:9px 20px;font-size:13px">2. Generate Round of 16</button>
-      <button class="btn btn-gold" onclick="soloGenerateNextKnockoutRound()" style="padding:9px 20px;font-size:13px">3. Generate Next Round</button>
-      <button class="btn btn-outline" onclick="soloResetKnockoutStageResults('R16')" style="padding:9px 20px;font-size:13px;color:var(--red);border-color:var(--red)">🧹 Reset Round of 16 Results</button>
+        <button class="btn btn-gold" onclick="soloAutoDraw()" style="padding:9px 20px;font-size:13px">Random Draw + Fixtures</button>
+        <button class="btn btn-outline" onclick="soloReDraw()" style="padding:9px 20px;font-size:13px">🔄 Re-draw (same players)</button>
+      </div>
+      <div style="margin:22px 0 6px;padding-top:16px;border-top:1px dashed var(--border)">
+        <div class="trn-admin-section-title">🧹 Knockout Round Result Reset</div>
+        <p style="font-size:12px;color:var(--text3);margin-bottom:10px">কোনো round-এর সব score মুছে pending করে দেয় এবং player profile stats ও match history ঠিক করে দেয়। Fixture থাকে।</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <select class="form-input" id="soloResetStage" style="max-width:200px;padding:6px 10px;font-size:13px">
+            <option value="R16">Round of 16</option><option value="QF">Quarter Final</option><option value="SF">Semi Final</option><option value="F">Final</option>
+          </select>
+          <button class="btn btn-outline" onclick="soloResetKnockoutStageResults(document.getElementById('soloResetStage').value)" style="padding:8px 18px;font-size:12px;color:var(--red);border-color:var(--red)">🧹 Reset Results</button>
+        </div>
+      </div>
     </div>
-    <span id="soloAutoStatus" style="font-size:13px;display:block;margin-top:10px"></span>
-  </div>
-  <div class="trn-admin-section">
+    <div class="trn-admin-section">
     <div class="trn-admin-section-title">📋 সব Group</div>
     <p style="font-size:13px;color:var(--text3);margin-bottom:14px">Random Draw করলে Group A, B, C, D... নাম দিয়ে অটো তৈরি হয়ে যায়। এখানে শুধু দেখা ও delete করা যাবে।</p>
     <div id="soloAdminGroupsList" style="margin-bottom:8px"><div style="color:var(--text3);font-size:13px">লোড হচ্ছে...</div></div>
@@ -4088,30 +4125,8 @@ if (document.readyState === 'loading') {
     </div>
   </div>
 
-  <div class="trn-admin-section">
-    <div class="trn-admin-section-title">⚽ Enter Match Result</div>
-    <p style="font-size:13px;color:var(--text3);margin-bottom:14px">একটা match বাছাই করে score বসাও — Save করলে group standings ও player profile (overall + Solo breakdown) অটো আপডেট হবে।</p>
-    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-      <select class="form-input" id="soloMatchSelect" style="flex:1;min-width:220px" onchange="loadSoloMatchForEntry()"><option value="">-- Match বাছাই করো --</option></select>
-      <button class="btn btn-outline" onclick="loadSoloAdminMatches()" style="padding:9px 16px;font-size:12px">🔄 Load</button>
-    </div>
-    <div id="soloMatchEntryArea"></div>
-  </div>
-
-  <div class="trn-admin-section">
-    <div class="trn-admin-section-title">⚡ Knockout — Add Match</div>
-    <p style="font-size:13px;color:var(--text3);margin-bottom:14px">Group stage শেষে Top 2 (per group) নিয়ে নিজে knockout match বসাও — Round name (e.g. Semi-Final, Final) দিয়ে দুইজন player বাছাই করো।</p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:10px">
-      <input class="form-input" id="soloKoRound" placeholder="Round (e.g. Semi-Final)">
-      <select class="form-input" id="soloKoP1"><option value="">-- Player 1 --</option></select>
-      <select class="form-input" id="soloKoP2"><option value="">-- Player 2 --</option></select>
-    </div>
-    <button class="btn btn-gold" onclick="createSoloKnockoutMatch()" style="padding:9px 22px;font-size:13px">➕ Knockout Match যোগ করো</button>
-    <span id="soloKoAddStatus" style="margin-left:12px;font-size:13px"></span>
-
-    <div style="font-size:13px;font-weight:700;color:var(--text2);margin:20px 0 10px;border-top:1px solid var(--border);padding-top:16px">📋 সব Knockout Match</div>
-    <div id="soloAdminKnockoutList"><div style="color:var(--text3);font-size:13px">লোড হচ্ছে...</div></div>
-  </div>
+  
+  </details>
 </div>
 
 <!-- ══════════════ MATCHDAY CONTROL (ADMIN) ══════════════ -->
@@ -13981,6 +13996,7 @@ async function fetchSoloData() {
   soloMatchesCache = matchesRes ? Object.entries(matchesRes).map(([id, v]) => ({ id, ...v })) : [];
   soloKnockoutCache = koRes ? Object.entries(koRes).map(([id, v]) => ({ id, ...v })) : [];
   soloConfigCache = cfgRes || null;
+  if (typeof renderSoloStageTracker === 'function') { try { renderSoloStageTracker(); } catch (e) {} }
 }
 
 function soloPlayerName(uid) {
@@ -14436,16 +14452,60 @@ window.loadSoloAdminKnockout = async function() {
   renderSoloAdminKnockoutList();
 };
 
+function renderSoloStageTracker() {
+  const el = document.getElementById('soloStageTracker');
+  if (!el) return;
+  const gTotal = soloMatchesCache.length;
+  const gDone = soloMatchesCache.filter(m => m.status === 'completed').length;
+  let prevComplete = gTotal > 0 && gDone === gTotal;
+  const draw = { R16: 'soloGenerateFirstKnockout()' };
+  let champion = '';
+  const cards = SOLO_STAGES.map(s => {
+    const docs = soloKnockoutCache.filter(m => m.tieId && m.stage === s.key);
+    const ties = soloTiesOfStage(s.key);
+    let state, text, btn = '';
+    if (ties.length) {
+      const infos = ties.map(t => soloTieInfo(t.docs));
+      const doneTies = infos.filter(i => i.done && i.winner).length;
+      const legsDone = docs.filter(m => m.status === 'completed').length;
+      if (doneTies === ties.length) {
+        state = 'done'; text = '✅ শেষ'; prevComplete = true;
+        if (s.key === 'F' && infos[0].winner) champion = soloPlayerName(infos[0].winner);
+      } else { state = 'live'; text = `⚡ চলছে · ${legsDone}/${docs.length} result`; prevComplete = false; }
+    } else if (prevComplete) {
+      state = 'ready'; text = 'প্রস্তুত'; prevComplete = false;
+      const fn = draw[s.key] || 'soloGenerateNextKnockoutRound()';
+      const label = s.key === 'R16' ? 'Round of 16 তৈরি করো' : s.key === 'F' ? '🏆 Final তৈরি করো' : `🎲 ${s.name} Draw`;
+      btn = `<button class="btn btn-gold" onclick="${fn}" style="padding:8px 12px;font-size:12px;margin-top:8px;width:100%">${label}</button>`;
+    } else { state = 'locked'; text = '🔒 আগের ধাপ শেষ হয়নি'; prevComplete = false; }
+    const border = state === 'ready' ? 'var(--gold)' : state === 'done' ? 'var(--green)' : 'var(--border)';
+    const op = state === 'locked' ? 'opacity:.55;' : '';
+    return `<div style="flex:1;min-width:130px;background:var(--card2);border:1.5px solid ${border};border-radius:12px;padding:10px 12px;${op}">
+      <div style="font-weight:700;font-size:13px">${s.name}</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:3px">${text}</div>${btn}</div>`;
+  }).join('');
+  el.innerHTML = `<div style="font-size:12px;color:var(--text3);margin-bottom:8px">Group stage: <b>${gDone}/${gTotal}</b> match শেষ${gTotal && gDone === gTotal ? ' ✅' : ''}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">${cards}</div>
+    ${champion ? `<div style="margin-top:12px;font-size:15px;font-weight:700;color:var(--gold)">🏆 Champion: ${champion}</div>` : ''}`;
+}
+
 function renderSoloAdminKnockoutList() {
+  renderSoloStageTracker();
   const wrap = document.getElementById('soloAdminKnockoutList');
   if (!wrap) return;
-  if (!soloKnockoutCache.length) { wrap.innerHTML = `<div style="color:var(--text3);font-size:13px">এখনো কোনো knockout match নেই।</div>`; return; }
-  wrap.innerHTML = soloKnockoutSorted().map(m => `
-    <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <strong style="font-size:12px;color:var(--gold)">${m.round || 'Round'}${m.leg ? ' &middot; Leg ' + m.leg + '/' + m.legs + (m.tieId ? ' &middot; Tie ' + ((m.tieIndex || 0) + 1) : '') : ''}</strong>
-        <button class="btn btn-outline" style="padding:3px 10px;font-size:10px;color:var(--red);border-color:var(--red)" onclick="deleteSoloKnockoutMatch('${m.id}')">🗑️</button>
-      </div>
+  if (!soloKnockoutCache.length) { wrap.innerHTML = `<div style="color:var(--text3);font-size:13px">এখনো কোনো knockout match নেই। উপরের Progress থেকে Round of 16 তৈরি করো।</div>`; return; }
+  const groups = [];
+  soloKnockoutSorted().forEach(m => {
+    const key = m.stage || 'other';
+    let g = groups.find(x => x.key === key);
+    if (!g) groups.push(g = { key, name: m.round || 'Knockout', ms: [] });
+    g.ms.push(m);
+  });
+  const firstPending = groups.find(g => g.ms.some(m => m.status !== 'completed'));
+  const openKey = (firstPending || groups[groups.length - 1]).key;
+  const row = m => `
+    <div style="background:var(--card2);border:1px solid ${m.status === 'completed' ? 'var(--green)' : 'var(--border)'};border-radius:10px;padding:10px 14px;margin-bottom:8px">
+      <div style="margin-bottom:6px;font-size:11px;color:var(--text3)">${m.tieId ? 'Tie ' + ((m.tieIndex || 0) + 1) + ' &middot; Leg ' + m.leg + '/' + m.legs : (m.round || 'Match')} ${m.status === 'completed' ? '&middot; ✅ saved' : ''}</div>
       <div style="display:flex;align-items:center;gap:6px">
         <span style="flex:1;font-size:13px">${soloPlayerName(m.player1Uid)}</span>
         <input type="number" min="0" class="form-input solo-ko-s1" data-id="${m.id}" value="${m.player1Score ?? ''}" style="width:50px;text-align:center;padding:5px">
@@ -14454,7 +14514,14 @@ function renderSoloAdminKnockoutList() {
         <span style="flex:1;font-size:13px;text-align:right">${soloPlayerName(m.player2Uid)}</span>
         <button class="btn btn-gold" style="padding:5px 10px;font-size:11px" onclick="saveSoloKnockoutResult('${m.id}')">💾</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  wrap.innerHTML = groups.map(g => {
+    const done = g.ms.filter(m => m.status === 'completed').length;
+    return `<details ${g.key === openKey ? 'open' : ''} style="margin-bottom:10px">
+      <summary style="cursor:pointer;font-weight:700;font-size:13px;color:var(--gold);margin-bottom:8px">${g.name} <span style="color:var(--text3);font-weight:400">· ${done}/${g.ms.length} saved</span></summary>
+      ${g.ms.map(row).join('')}
+    </details>`;
+  }).join('');
 }
 
 window.createSoloKnockoutMatch = async function() {
@@ -14812,7 +14879,7 @@ window.soloResetKnockoutStageResults = async function(stageKey) {
       await fetch(`${SOLO_DB}/users/${u.uid}/statsSolo.json`, { method: 'PUT', body: JSON.stringify(e) });
       fixed++;
     }
-    window._allUsersCache = []; window._allUsersCacheTime = 0; window._mainRankingCache = null;
+    window._allUsersCache = []; window._allUsersCacheTime = 0; window._mainRankingCache = null; window.rankingData = [];
     // 4) Verify: database theke fresh pore dekhi shobar stats expected-er sathe mile ki na
     const vr = await fetch(`${SOLO_DB}/users.json`);
     const vdata = (await vr.json()) || {};
@@ -14884,10 +14951,21 @@ window.soloGenerateNextKnockoutRound = async function() {
   const notDone = infos.filter(i => !i.done || !i.winner).length;
   if (notDone) { st.textContent = `${SOLO_STAGES[idx].name} sesh hoyni (${notDone} tie baki / penalty winner nei)`; st.style.color = 'var(--red)'; return; }
   const next = SOLO_STAGES[idx + 1];
+  const mode = (document.getElementById('soloDrawMode') || {}).value || 'random';
+  let winners = infos.map(i => i.winner);
+  const random = mode === 'random' && next.key !== 'F';
+  if (!confirm(`${next.name} ${random ? 'Random Draw' : 'তৈরি'} করবে?\n\n${SOLO_STAGES[idx].name}-এর ${winners.length} জন winner নিয়ে হবে।`)) { st.textContent = 'Cancelled.'; return; }
+  if (random) {
+    for (let i = winners.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [winners[i], winners[j]] = [winners[j], winners[i]]; }
+  }
   let docs = {};
-  for (let k = 0; k < infos.length / 2; k++) docs = { ...docs, ...soloMakeTie(next, k, infos[2 * k].winner, infos[2 * k + 1].winner) };
+  const pairs = [];
+  for (let k = 0; k < winners.length / 2; k++) {
+    docs = { ...docs, ...soloMakeTie(next, k, winners[2 * k], winners[2 * k + 1]) };
+    pairs.push(`${soloPlayerName(winners[2 * k])} vs ${soloPlayerName(winners[2 * k + 1])}`);
+  }
   await fetch(`${SOLO_DB}/typsolo/knockout.json`, { method: 'PATCH', body: JSON.stringify(docs) });
-  st.textContent = `${next.name} generate hoyeche!`; st.style.color = 'var(--green)';
+  st.textContent = `✅ ${next.name} ready! ` + pairs.join(' · '); st.style.color = 'var(--green)';
   await fetchSoloData();
   renderSoloAdminKnockoutList();
 };
