@@ -14811,8 +14811,19 @@ window.soloResetKnockoutStageResults = async function(stageKey) {
       await fetch(`${SOLO_DB}/users/${u.uid}/statsSolo.json`, { method: 'PUT', body: JSON.stringify(e) });
       fixed++;
     }
-    window._allUsersCache = []; window._allUsersCacheTime = 0;
-    st.textContent = `✅ ${stageKey} reset হয়েছে — ${touched.length}টা leg, ${del.length}টা history entry delete, ${fixed} জন player-এর stats ঠিক হয়েছে। এখন নতুন করে result add করো।`;
+    window._allUsersCache = []; window._allUsersCacheTime = 0; window._mainRankingCache = null;
+    // 4) Verify: database theke fresh pore dekhi shobar stats expected-er sathe mile ki na
+    const vr = await fetch(`${SOLO_DB}/users.json`);
+    const vdata = (await vr.json()) || {};
+    const bad = [];
+    Object.entries(vdata).forEach(([uid, u]) => {
+      if (!u) return;
+      const e = exp[uid] || { matches: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0 };
+      const ss = u.statsSolo || {};
+      if (keys.some(k => (ss[k] || 0) !== e[k])) bad.push(`${u.name || uid}: statsSolo ${ss.matches || 0} match, expected ${e.matches}`);
+    });
+    if (bad.length) console.warn('Reset verify mismatch', bad);
+    st.textContent = `✅ ${stageKey} reset হয়েছে — ${touched.length}টা leg, ${del.length}টা history entry delete, ${fixed} জন player-এর stats ঠিক হয়েছে।${bad.length ? ' ⚠️ ' + bad.length + ' জনের stats এখনো মিলছে না (console দেখো)।' : ' যাচাই করা হয়েছে: সবার stats ঠিক।'} এখন নতুন করে result add করো।`;
     st.style.color = 'var(--green)';
   } catch (e) {
     console.error(e);
