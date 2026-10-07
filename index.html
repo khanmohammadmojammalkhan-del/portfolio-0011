@@ -14765,8 +14765,8 @@ window.soloResetKnockoutStageResults = async function(stageKey) {
   const docs = soloKnockoutCache.filter(m => m.stage === stageKey);
   if (!docs.length) { st.textContent = 'Ei round-e kono match nei'; st.style.color = 'var(--red)'; return; }
   const touched = docs.filter(m => m.status === 'completed' || m.player1Score != null || m.player2Score != null || m.pensWinner || m.statsApplied || m.historyLogged);
-  if (!touched.length) { st.textContent = 'Reset korar moto kono result nei'; st.style.color = 'var(--green)'; return; }
-  if (!confirm(`${stageKey}-er ${touched.length}টা leg-এর result মুছে ফেলা হবে:\n• সব score reset হবে\n• Player profile stats (match/win/draw/loss/goal) ঠিক হবে\n• Match history থেকে এই round-এর entry delete হবে\n\nFixture থাকবে, তুমি নতুন করে result add করবে। Continue?`)) { st.textContent = 'Cancelled.'; return; }
+  // FIX: result na thakleo stats/history cleanup chalbe — profile-e age-r save theke jora extra match thakte pare
+  if (!confirm(`${stageKey} reset + profile stats ঠিক করা হবে:\n• ${touched.length}টা leg-এর score reset (থাকলে)\n• Player profile stats থেকে ${stageKey}-এর (আর সব duplicate) match বাদ — শুধু আসল completed group match গুলো থাকবে\n• Match history থেকে এই round-এর entry delete\n\nFixture থাকবে, তুমি নতুন করে result add করবে। Continue?`)) { st.textContent = 'Cancelled.'; return; }
   st.textContent = '⏳ Resetting...'; st.style.color = 'var(--text3)';
   try {
     // 1) Match history delete (ei round-er pair gulo, 'Solo Knockout')
@@ -14806,6 +14806,7 @@ window.soloResetKnockoutStageResults = async function(stageKey) {
       const cur = u.statsSolo || { matches: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0 };
       const e = exp[u.uid] || { matches: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0 };
       if (!keys.some(k => (cur[k] || 0) !== e[k])) continue;
+      if (!u.statsSolo && e.matches > 0 && (u.matches || 0) >= e.matches) continue; // statsSolo nei: overall-e age-i ache dhore skip (double add na hoy)
       const overall = {}; keys.forEach(k => overall[k] = Math.max(0, (u[k] || 0) - ((cur[k] || 0) - e[k])));
       await fetch(`${SOLO_DB}/users/${u.uid}.json`, { method: 'PATCH', body: JSON.stringify(overall) });
       await fetch(`${SOLO_DB}/users/${u.uid}/statsSolo.json`, { method: 'PUT', body: JSON.stringify(e) });
