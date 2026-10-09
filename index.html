@@ -4059,7 +4059,13 @@ if (document.readyState === 'loading') {
   <!-- 1) PROGRESS: Round of 16 -> QF -> SF -> Final, ekta button ekta step -->
   <div class="trn-admin-section" style="border:1.5px solid var(--gold)">
     <div class="trn-admin-section-title">🏆 Solo Tournament — Progress</div>
-    <div id="soloStageTracker" style="margin-bottom:10px"><div style="color:var(--text3);font-size:13px">লোড হচ্ছে...</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:10px;border:1px dashed var(--gold);border-radius:10px">
+      <label style="font-size:12px;color:var(--text3);font-weight:700">🎮 Tournament:</label>
+      <select class="form-input soloTrnPicker" onchange="soloSwitchTournament(this.value)" style="flex:1;min-width:150px;padding:7px 10px;font-size:13px"></select>
+      <button class="btn btn-outline" onclick="soloReloadList(this)" style="padding:7px 12px;font-size:12px">🔄 Load</button>
+      <button class="btn btn-gold" onclick="soloCreateTournament()" style="padding:7px 12px;font-size:12px">➕ New</button>
+    </div>
+        <div id="soloStageTracker" style="margin-bottom:10px"><div style="color:var(--text3);font-size:13px">লোড হচ্ছে...</div></div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
       <label style="font-size:12px;color:var(--text3)">QF / SF Draw:</label>
       <select class="form-input" id="soloDrawMode" style="max-width:240px;padding:6px 10px;font-size:13px">
@@ -4073,7 +4079,13 @@ if (document.readyState === 'loading') {
   <!-- 2) RESULT ENTRY: group + knockout ek jaygay -->
   <div class="trn-admin-section">
     <div class="trn-admin-section-title">⚽ Result Entry</div>
-    <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px">Group Stage</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:10px;border:1px dashed var(--gold);border-radius:10px">
+      <label style="font-size:12px;color:var(--text3);font-weight:700">🎮 Tournament:</label>
+      <select class="form-input soloTrnPicker" onchange="soloSwitchTournament(this.value)" style="flex:1;min-width:150px;padding:7px 10px;font-size:13px"></select>
+      <button class="btn btn-outline" onclick="soloReloadList(this)" style="padding:7px 12px;font-size:12px">🔄 Load</button>
+      <button class="btn btn-gold" onclick="soloCreateTournament()" style="padding:7px 12px;font-size:12px">➕ New</button>
+    </div>
+        <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px">Group Stage</div>
     <p style="font-size:13px;color:var(--text3);margin-bottom:14px">একটা match বাছাই করে score বসাও — Save করলে group standings ও player profile (overall + Solo breakdown) অটো আপডেট হবে।</p>
     <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
       <select class="form-input" id="soloMatchSelect" style="flex:1;min-width:220px" onchange="loadSoloMatchForEntry()"><option value="">-- Match বাছাই করো --</option></select>
@@ -14021,6 +14033,18 @@ function soloRenderTournamentPickers() {
   document.querySelectorAll('.soloPublicPickerWrap').forEach(el => { el.style.display = (soloTournamentList.length > 1 || _adm) ? 'flex' : 'none'; });
   document.querySelectorAll('.soloAdminOnlyBtn').forEach(el => { el.style.display = _adm ? 'inline-block' : 'none'; });
 }
+window.soloReloadList = async function(btn) {
+  const t = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = '⏳...'; btn.disabled = true; }
+  try { await soloLoadTournamentList(); } catch (e) { console.error(e); alert('Tournament list load hoyni: ' + e.message); }
+  if (btn) { btn.textContent = t; btn.disabled = false; }
+  const act = document.getElementById('adminTab-solotourney');
+  if (act && act.classList.contains('active')) { soloClearCaches(); loadSoloAdminGroups(); loadSoloAdminMatches(); loadSoloAdminKnockout(); }
+};
+(function(){
+  const init = () => { try { soloRenderTournamentPickers(); soloLoadTournamentList(); } catch (e) { console.error(e); } };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else setTimeout(init, 0);
+})();
 function soloClearCaches() {
   soloGroupsCache = []; soloMatchesCache = []; soloKnockoutCache = []; soloConfigCache = null;
 }
