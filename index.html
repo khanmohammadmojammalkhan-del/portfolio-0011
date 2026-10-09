@@ -2871,6 +2871,11 @@ if (document.readyState === 'loading') {
       <h2 class="solo-hero-title">Solo Championship</h2>
       <div class="solo-hero-sub">Group Stage<i>&#9670;</i>Knockout<i>&#9670;</i>1v1</div>
     </div>
+    <div class="soloPublicPickerWrap" style="display:none;justify-content:center;align-items:center;gap:10px;margin:-8px 0 18px;flex-wrap:wrap">
+      <label style="font-size:12px;color:var(--text3);letter-spacing:.08em">TOURNAMENT</label>
+      <select class="form-input soloTrnPicker" onchange="soloSwitchTournament(this.value)" style="max-width:260px;padding:6px 10px;font-size:13px"></select>
+      <button class="btn btn-gold soloAdminOnlyBtn" onclick="soloCreateTournament()" style="display:none;padding:7px 14px;font-size:12px">➕ New Tournament</button>
+    </div>
     <div class="trn-tabs">
       <button class="trn-tab solo-tab active" onclick="switchSoloTab('standings')">Standings</button>
       <button class="trn-tab solo-tab" onclick="switchSoloTab('fixtures')">Fixtures</button>
@@ -3144,7 +3149,7 @@ if (document.readyState === 'loading') {
           <div class="admin-title">🛡️ ADMIN PANEL</div>
           <div style="font-size:13px;color:var(--text3);margin-top:4px">TYP Academy Management</div>
         </div>
-        <span class="admin-badge">ADMIN</span>
+        <span class="admin-badge">ADMIN · multi-solo v2</span>
       </div>
 
       <div class="admin-tabs">
@@ -4039,6 +4044,17 @@ if (document.readyState === 'loading') {
 
 <!-- ══════════════ SOLO TOURNAMENT (ADMIN) ══════════════ -->
 <div class="admin-section" id="adminTab-solotourney">
+
+  <div class="trn-admin-section" style="border:1.5px solid var(--gold)">
+    <div class="trn-admin-section-title">🎮 Tournament বাছাই করো</div>
+    <p style="font-size:13px;color:var(--text3);margin-bottom:10px">প্রতিটা Solo tournament-এর group, fixture, knockout আলাদা। নিচের সব section এই selected tournament-এর জন্য কাজ করবে।</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <select class="form-input soloTrnPicker" onchange="soloSwitchTournament(this.value)" style="flex:1;min-width:200px;max-width:320px"></select>
+      <button class="btn btn-gold" onclick="soloCreateTournament()" style="padding:8px 16px;font-size:12px">➕ New Tournament</button>
+      <button class="btn btn-outline" onclick="soloRenameTournament()" style="padding:8px 14px;font-size:12px">✏️ Rename</button>
+      <button class="btn btn-outline" onclick="soloDeleteTournament()" style="padding:8px 14px;font-size:12px;color:var(--red);border-color:var(--red)">🗑️ Delete</button>
+    </div>
+  </div>
 
   <!-- 1) PROGRESS: Round of 16 -> QF -> SF -> Final, ekta button ekta step -->
   <div class="trn-admin-section" style="border:1.5px solid var(--gold)">
@@ -8065,7 +8081,7 @@ window.switchAdminTab = function(tab) {
   }
   if (tab === 'tournament') { loadTrnAdminTeams(); if (typeof loadTrnStatsAdminList === 'function') loadTrnStatsAdminList(); }
   if (tab === 'fourman' && typeof loadF4mAdminSquads === 'function') { loadF4mAdminSquads(); loadF4mAdminMatchdays(); if (typeof loadF4mStatsAdminList === 'function') loadF4mStatsAdminList(); }
-  if (tab === 'solotourney' && typeof loadSoloAdminGroups === 'function') { loadSoloAdminGroups(); loadSoloAdminMatches(); loadSoloAdminKnockout(); }
+  if (tab === 'solotourney' && typeof loadSoloAdminGroups === 'function') { soloLoadTournamentList(); loadSoloAdminGroups(); loadSoloAdminMatches(); loadSoloAdminKnockout(); }
   if (tab === 'matchdayctrl' && typeof loadMatchdayControlList === 'function') loadMatchdayControlList();
   if (tab === 'aiqa' && typeof loadAdminAiQa === 'function') loadAdminAiQa();
   if (tab === 'typadmins' && typeof loadTypAdminsAdminList === 'function') loadTypAdminsAdminList();
@@ -13980,12 +13996,85 @@ let soloMatchesCache = [];
 let soloKnockoutCache = [];
 let soloUsersCache = [];
 
+// ── MULTI SOLO TOURNAMENT ──
+// 'main' = purano data (typsolo/), baki gulo typsolo/tournaments/<id>/ e
+let soloActiveId = (function(){ try { return localStorage.getItem('typSoloActive') || 'main'; } catch(e) { return 'main'; } })();
+let soloTournamentList = [{ id: 'main', name: 'Solo Championship' }];
+function soloPath() { return soloActiveId === 'main' ? 'typsolo' : `typsolo/tournamentsData/${soloActiveId}`; }
+async function soloLoadTournamentList() {
+  let meta = null;
+  try { meta = await fetch(`${SOLO_DB}/typsolo/tournamentsMeta.json`).then(r => r.json()); } catch (e) {}
+  const extra = (meta && !meta.error) ? Object.entries(meta).map(([id, v]) => ({ id, name: v.name || id, createdAt: v.createdAt || '' })).sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || '')) : [];
+  let mainName = 'Solo Championship';
+  try { const mn = await fetch(`${SOLO_DB}/typsolo/mainName.json`).then(r => r.json()); if (typeof mn === 'string') mainName = mn; } catch (e) {}
+  soloTournamentList = [{ id: 'main', name: mainName }, ...extra];
+  if (!soloTournamentList.some(t => t.id === soloActiveId)) soloActiveId = 'main';
+  soloRenderTournamentPickers();
+}
+function soloRenderTournamentPickers() {
+  const opts = soloTournamentList.map(t => `<option value="${t.id}" ${t.id === soloActiveId ? 'selected' : ''}>${String(t.name).replace(/</g,'&lt;')}</option>`).join('');
+  document.querySelectorAll('.soloTrnPicker').forEach(el => { el.innerHTML = opts; });
+  const cur = soloTournamentList.find(t => t.id === soloActiveId);
+  const h = document.querySelector('#trnSoloView .solo-hero-title');
+  if (h && cur) h.textContent = cur.name;
+  const _adm = !!window._isAdminSession;
+  document.querySelectorAll('.soloPublicPickerWrap').forEach(el => { el.style.display = (soloTournamentList.length > 1 || _adm) ? 'flex' : 'none'; });
+  document.querySelectorAll('.soloAdminOnlyBtn').forEach(el => { el.style.display = _adm ? 'inline-block' : 'none'; });
+}
+function soloClearCaches() {
+  soloGroupsCache = []; soloMatchesCache = []; soloKnockoutCache = []; soloConfigCache = null;
+}
+window.soloSwitchTournament = async function(id) {
+  if (!id || id === soloActiveId) return;
+  soloActiveId = id;
+  try { localStorage.setItem('typSoloActive', id); } catch (e) {}
+  soloClearCaches();
+  soloRenderTournamentPickers();
+  const adminOpen = document.getElementById('adminTab-solotourney');
+  const adminVisible = adminOpen && adminOpen.classList.contains('active');
+  if (adminVisible) { loadSoloAdminGroups(); loadSoloAdminMatches(); loadSoloAdminKnockout(); }
+  const pv = document.getElementById('trnSoloView');
+  if (pv && pv.style.display !== 'none') {
+    const act = document.querySelector('.solo-tab.active');
+    const m = act && act.getAttribute('onclick').match(/'(\w+)'/);
+    switchSoloTab(m ? m[1] : 'standings');
+  }
+};
+window.soloCreateTournament = async function() {
+  const name = (prompt('নতুন Solo Tournament-এর নাম দাও:') || '').trim();
+  if (!name) return;
+  const id = 't' + Date.now().toString(36);
+  const r = await fetch(`${SOLO_DB}/typsolo/tournamentsMeta/${id}.json`, { method: 'PUT', body: JSON.stringify({ name, createdAt: new Date().toISOString() }) });
+  if (!r.ok) { alert('Create hoyni (Firebase: ' + r.status + '). Rules check korun.'); return; }
+  await soloLoadTournamentList();
+  await soloSwitchTournament(id);
+};
+window.soloRenameTournament = async function() {
+  const cur = soloTournamentList.find(t => t.id === soloActiveId);
+  const name = (prompt('নতুন নাম:', cur ? cur.name : '') || '').trim();
+  if (!name) return;
+  if (soloActiveId === 'main') await fetch(`${SOLO_DB}/typsolo/mainName.json`, { method: 'PUT', body: JSON.stringify(name) });
+  else await fetch(`${SOLO_DB}/typsolo/tournamentsMeta/${soloActiveId}/name.json`, { method: 'PUT', body: JSON.stringify(name) });
+  await soloLoadTournamentList();
+};
+window.soloDeleteTournament = async function() {
+  if (soloActiveId === 'main') { alert('Main tournament delete kora jabe na. Draw diye reset korte paro.'); return; }
+  const cur = soloTournamentList.find(t => t.id === soloActiveId);
+  if (!confirm(`"${cur ? cur.name : soloActiveId}" tournament-er shob group/fixture/knockout delete hobe. (Player stats revert hobe na — dorkar hole age result gulo edit/reset koro.) Continue?`)) return;
+  const id = soloActiveId;
+  await fetch(`${SOLO_DB}/typsolo/tournamentsData/${id}.json`, { method: 'DELETE' });
+  await fetch(`${SOLO_DB}/typsolo/tournamentsMeta/${id}.json`, { method: 'DELETE' });
+  soloActiveId = 'main'; try { localStorage.setItem('typSoloActive', 'main'); } catch (e) {}
+  await soloLoadTournamentList();
+  await soloSwitchTournament('main');
+};
+
 async function fetchSoloData() {
   let [groupsRes, matchesRes, koRes, cfgRes] = await Promise.all([
-    fetch(`${SOLO_DB}/typsolo/groups.json`).then(r => r.json()),
-    fetch(`${SOLO_DB}/typsolo/matches.json`).then(r => r.json()),
-    fetch(`${SOLO_DB}/typsolo/knockout.json`).then(r => r.json()),
-    fetch(`${SOLO_DB}/typsolo/config.json`).then(r => r.json())
+    fetch(`${SOLO_DB}/${soloPath()}/groups.json`).then(r => r.json()),
+    fetch(`${SOLO_DB}/${soloPath()}/matches.json`).then(r => r.json()),
+    fetch(`${SOLO_DB}/${soloPath()}/knockout.json`).then(r => r.json()),
+    fetch(`${SOLO_DB}/${soloPath()}/config.json`).then(r => r.json())
   ]);
   // Firebase returns {"error":"Permission denied"} when rules block the path — don't treat that as data
   const soloBlocked = [groupsRes, matchesRes, koRes, cfgRes].find(r => r && typeof r === 'object' && typeof r.error === 'string');
@@ -14011,6 +14100,7 @@ function soloGroupName(id) {
 
 // ── Public: load on entering the Solo tournament view ──
 window.loadSoloTournament = async function() {
+  await soloLoadTournamentList();
   switchSoloTab('standings');
 };
 
@@ -14245,7 +14335,7 @@ window.createSoloGroup = async function() {
   const status = document.getElementById('soloGrStatus');
   if (!name || playerUids.length < 2) { status.textContent = '⚠️ নাম দাও ও অন্তত ২ জন player সিলেক্ট করো।'; status.style.color = 'var(--red)'; return; }
   status.textContent = '⏳ Saving...'; status.style.color = 'var(--text3)';
-  await fetch(`${SOLO_DB}/typsolo/groups.json`, { method: 'POST', body: JSON.stringify({ name, playerUids, createdAt: new Date().toISOString() }) });
+  await fetch(`${SOLO_DB}/${soloPath()}/groups.json`, { method: 'POST', body: JSON.stringify({ name, playerUids, createdAt: new Date().toISOString() }) });
   document.getElementById('soloGrName').value = '';
   sel.selectedIndex = -1;
   soloPickerRender('soloGrPlayers');
@@ -14256,7 +14346,7 @@ window.createSoloGroup = async function() {
 
 window.deleteSoloGroup = async function(id) {
   if (!confirm('এই group delete করতে চাও? এর সাথে জড়িত fixture-গুলো আলাদাভাবে মুছে দিও।')) return;
-  await fetch(`${SOLO_DB}/typsolo/groups/${id}.json`, { method: 'DELETE' });
+  await fetch(`${SOLO_DB}/${soloPath()}/groups/${id}.json`, { method: 'DELETE' });
   await loadSoloAdminGroups();
 };
 
@@ -14275,12 +14365,12 @@ window.generateSoloGroupFixtures = async function() {
   if (doneOnes.length && !confirm(`এই group-এ ${doneOnes.length}টা completed match আছে। Regenerate করলে এগুলোর result মুছে যাবে (player stats-ও revert হবে)। Continue?`)) { status.textContent = ''; return; }
   for (const m of doneOnes) await soloRevertMatchStats(m);
   window._allUsersCache = [];
-  for (const m of existing) { await fetch(`${SOLO_DB}/typsolo/matches/${m.id}.json`, { method: 'DELETE' }); }
+  for (const m of existing) { await fetch(`${SOLO_DB}/${soloPath()}/matches/${m.id}.json`, { method: 'DELETE' }); }
 
   const players = g.playerUids;
   for (let i = 0; i < players.length; i++) {
     for (let j = i + 1; j < players.length; j++) {
-      await fetch(`${SOLO_DB}/typsolo/matches.json`, {
+      await fetch(`${SOLO_DB}/${soloPath()}/matches.json`, {
         method: 'POST',
         body: JSON.stringify({ groupId, player1Uid: players[i], player2Uid: players[j], player1Score: null, player2Score: null, status: 'pending', createdAt: new Date().toISOString() })
       });
@@ -14356,7 +14446,7 @@ async function _saveSoloMatchResultImpl(mid) {
     await soloApplyPlayerStat(userMap[p1], p1, score1, result1);
     await soloApplyPlayerStat(userMap[p2], p2, score2, result2);
   }
-  await fetch(`${SOLO_DB}/typsolo/matches/${mid}.json`, { method: 'PATCH', body: JSON.stringify({ player1Score: score1, player2Score: score2, status: 'completed', statsApplied: true, historyLogged: true, updatedAt: new Date().toISOString() }) });
+  await fetch(`${SOLO_DB}/${soloPath()}/matches/${mid}.json`, { method: 'PATCH', body: JSON.stringify({ player1Score: score1, player2Score: score2, status: 'completed', statsApplied: true, historyLogged: true, updatedAt: new Date().toISOString() }) });
   if (!alreadyLogged && userMap[p1] && userMap[p2]) {
     typRecordMatchHistory({
       homeName: userMap[p1].name, awayName: userMap[p2].name,
@@ -14400,12 +14490,19 @@ window.soloRepairStats = async function() {
   const st = document.getElementById('soloRepairStatus');
   st.textContent = '⏳ Checking...';
   await fetchSoloData();
+  await soloLoadTournamentList();
+  const allMatches = [];
+  for (const t of soloTournamentList) {
+    const base = t.id === 'main' ? 'typsolo' : `typsolo/tournamentsData/${t.id}`;
+    const [mm, kk] = await Promise.all([fetch(`${SOLO_DB}/${base}/matches.json`).then(r => r.json()).catch(() => null), fetch(`${SOLO_DB}/${base}/knockout.json`).then(r => r.json()).catch(() => null)]);
+    [mm, kk].forEach(o => { if (o && !(typeof o.error === 'string')) allMatches.push(...Object.values(o)); });
+  }
   const exp = {};
   const add = (uid, gf, r) => {
     const e = exp[uid] || (exp[uid] = { matches: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0 });
     e.matches++; e.goalsFor += gf; if (r === 'w') e.wins++; else if (r === 'd') e.draws++; else e.losses++;
   };
-  [...soloMatchesCache, ...soloKnockoutCache].forEach(m => {
+  allMatches.forEach(m => {
     if (m.status !== 'completed' || m.player1Score == null || m.player2Score == null) return;
     const a = m.player1Score, b = m.player2Score;
     add(m.player1Uid, a, a > b ? 'w' : a < b ? 'l' : 'd');
@@ -14530,7 +14627,7 @@ window.createSoloKnockoutMatch = async function() {
   const p2 = document.getElementById('soloKoP2').value;
   const status = document.getElementById('soloKoAddStatus');
   if (!round || !p1 || !p2 || p1 === p2) { status.textContent = '⚠️ Round নাম দাও ও দুইজন আলাদা player বাছাই করো।'; status.style.color = 'var(--red)'; return; }
-  await fetch(`${SOLO_DB}/typsolo/knockout.json`, { method: 'POST', body: JSON.stringify({ round, player1Uid: p1, player2Uid: p2, player1Score: null, player2Score: null, status: 'pending', createdAt: new Date().toISOString() }) });
+  await fetch(`${SOLO_DB}/${soloPath()}/knockout.json`, { method: 'POST', body: JSON.stringify({ round, player1Uid: p1, player2Uid: p2, player1Score: null, player2Score: null, status: 'pending', createdAt: new Date().toISOString() }) });
   document.getElementById('soloKoRound').value = '';
   status.textContent = '✅ যোগ হয়েছে!'; status.style.color = 'var(--green)';
   await fetchSoloData();
@@ -14542,7 +14639,7 @@ window.deleteSoloKnockoutMatch = async function(id) {
   if (!confirm('এই knockout match delete করতে চাও?')) return;
   const km = soloKnockoutCache.find(x => x.id === id);
   if (km && km.status === 'completed') { await soloRevertMatchStats(km); window._allUsersCache = []; }
-  await fetch(`${SOLO_DB}/typsolo/knockout/${id}.json`, { method: 'DELETE' });
+  await fetch(`${SOLO_DB}/${soloPath()}/knockout/${id}.json`, { method: 'DELETE' });
   await fetchSoloData();
   renderSoloAdminKnockoutList();
 };
@@ -14555,7 +14652,7 @@ async function _saveSoloKnockoutResultImpl(id) {
   // FIX: cache na, database theke fresh doc pore — stale cache-er karone 2/3 bar stats add hoto
   let m = null;
   try {
-    const fr = await fetch(`${SOLO_DB}/typsolo/knockout/${id}.json`);
+    const fr = await fetch(`${SOLO_DB}/${soloPath()}/knockout/${id}.json`);
     const fd = await fr.json();
     if (fd) m = { id, ...fd };
   } catch (e) { m = soloKnockoutCache.find(x => x.id === id); }
@@ -14588,7 +14685,7 @@ async function _saveSoloKnockoutResultImpl(id) {
       });
     }
   }
-  await fetch(`${SOLO_DB}/typsolo/knockout/${id}.json`, { method: 'PATCH', body: JSON.stringify({ player1Score: score1, player2Score: score2, status: 'completed', statsApplied: true, historyLogged: true, updatedAt: new Date().toISOString() }) });
+  await fetch(`${SOLO_DB}/${soloPath()}/knockout/${id}.json`, { method: 'PATCH', body: JSON.stringify({ player1Score: score1, player2Score: score2, status: 'completed', statsApplied: true, historyLogged: true, updatedAt: new Date().toISOString() }) });
   window._allUsersCache = [];
   await fetchSoloData();
   await soloCheckTiePens(id);
@@ -14803,7 +14900,19 @@ window.soloAutoDraw = async function() {
     }));
   }
   const config = { format: key, players: fmt.players, groups: fmt.groups, groupSize: fmt.groupSize, qual: fmt.qual, createdAt: now };
-  const putRes = await fetch(`${SOLO_DB}/typsolo.json`, { method: 'PUT', body: JSON.stringify({ config, groups, matches }) });
+  let putRes;
+  if (soloActiveId === 'main') {
+    // main tournament lives at typsolo root, so don't wipe typsolo/tournaments*
+    const rs = await Promise.all([
+      fetch(`${SOLO_DB}/typsolo/config.json`, { method: 'PUT', body: JSON.stringify(config) }),
+      fetch(`${SOLO_DB}/typsolo/groups.json`, { method: 'PUT', body: JSON.stringify(groups) }),
+      fetch(`${SOLO_DB}/typsolo/matches.json`, { method: 'PUT', body: JSON.stringify(matches) }),
+      fetch(`${SOLO_DB}/typsolo/knockout.json`, { method: 'DELETE' })
+    ]);
+    putRes = rs.find(r => !r.ok) || rs[0];
+  } else {
+    putRes = await fetch(`${SOLO_DB}/${soloPath()}.json`, { method: 'PUT', body: JSON.stringify({ config, groups, matches }) });
+  }
   if (!putRes.ok) { st.textContent = `❌ Save hoyni (Firebase: ${putRes.status} Permission denied). Firebase Rules-e "typsolo" er .read/.write true korun.`; st.style.color = 'var(--red)'; return; }
   st.textContent = `Done! ${fmt.groups} group, ${Object.keys(matches).length} match generate hoyeche.`; st.style.color = 'var(--green)';
   await loadSoloAdminGroups();
@@ -14847,7 +14956,7 @@ window.soloResetKnockoutStageResults = async function(stageKey) {
 
     // 2) Score reset (stats ta porer step-e recalc hobe)
     for (const m of docs) {
-      await fetch(`${SOLO_DB}/typsolo/knockout/${m.id}.json`, { method: 'PATCH', body: JSON.stringify({
+      await fetch(`${SOLO_DB}/${soloPath()}/knockout/${m.id}.json`, { method: 'PATCH', body: JSON.stringify({
         player1Score: null, player2Score: null, status: 'pending', statsApplied: null, historyLogged: null, pensWinner: null, updatedAt: new Date().toISOString()
       }) });
     }
@@ -14932,7 +15041,7 @@ window.soloGenerateFirstKnockout = async function() {
   const order = [0, 7, 4, 3, 2, 5, 6, 1];
   let docs = {};
   order.forEach((pi, tIndex) => { docs = { ...docs, ...soloMakeTie(SOLO_STAGES[0], tIndex, pairs[pi].hi.uid, pairs[pi].lo.uid) }; });
-  await fetch(`${SOLO_DB}/typsolo/knockout.json`, { method: 'PATCH', body: JSON.stringify(docs) });
+  await fetch(`${SOLO_DB}/${soloPath()}/knockout.json`, { method: 'PATCH', body: JSON.stringify(docs) });
   st.textContent = 'Round of 16 generate hoyeche (8 tie, 2 leg)!'; st.style.color = 'var(--green)';
   await fetchSoloData();
   renderSoloAdminKnockoutList();
@@ -14964,7 +15073,7 @@ window.soloGenerateNextKnockoutRound = async function() {
     docs = { ...docs, ...soloMakeTie(next, k, winners[2 * k], winners[2 * k + 1]) };
     pairs.push(`${soloPlayerName(winners[2 * k])} vs ${soloPlayerName(winners[2 * k + 1])}`);
   }
-  await fetch(`${SOLO_DB}/typsolo/knockout.json`, { method: 'PATCH', body: JSON.stringify(docs) });
+  await fetch(`${SOLO_DB}/${soloPath()}/knockout.json`, { method: 'PATCH', body: JSON.stringify(docs) });
   st.textContent = `✅ ${next.name} ready! ` + pairs.join(' · '); st.style.color = 'var(--green)';
   await fetchSoloData();
   renderSoloAdminKnockoutList();
@@ -14978,7 +15087,7 @@ async function soloCheckTiePens(id) {
   const i = soloTieInfo(docs);
   if (!i.done || i.ga !== i.gb || i.legs.some(x => x.pensWinner)) return;
   const win = confirm(`Aggregate draw (${i.ga}-${i.gb}). Penalty winner ke?\nOK = ${soloPlayerName(i.A)}\nCancel = ${soloPlayerName(i.B)}`) ? i.A : i.B;
-  await fetch(`${SOLO_DB}/typsolo/knockout/${id}.json`, { method: 'PATCH', body: JSON.stringify({ pensWinner: win }) });
+  await fetch(`${SOLO_DB}/${soloPath()}/knockout/${id}.json`, { method: 'PATCH', body: JSON.stringify({ pensWinner: win }) });
   await fetchSoloData();
 }
 
