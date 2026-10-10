@@ -14581,11 +14581,14 @@ function renderSoloStageTracker() {
   let prevComplete = gTotal > 0 && gDone === gTotal;
   const draw = { R16: 'soloGenerateFirstKnockout()' };
   let champion = '';
+  let latestKey = null;
+  SOLO_STAGES.forEach(s => { if (soloKnockoutCache.some(m => m.tieId && m.stage === s.key)) latestKey = s.key; });
   const cards = SOLO_STAGES.map(s => {
     const docs = soloKnockoutCache.filter(m => m.tieId && m.stage === s.key);
     const ties = soloTiesOfStage(s.key);
     let state, text, btn = '';
     if (ties.length) {
+      if (s.key === latestKey) btn = `<button class="btn btn-ghost" onclick="soloUndoKnockoutDraw('${s.key}')" style="padding:8px 12px;font-size:12px;margin-top:8px;width:100%;border:1px solid var(--red);color:var(--red)">↩️ Undo Draw</button>`;
       const infos = ties.map(t => soloTieInfo(t.docs));
       const doneTies = infos.filter(i => i.done && i.winner).length;
       const legsDone = docs.filter(m => m.status === 'completed').length;
@@ -14956,6 +14959,45 @@ function soloMakeTie(stage, tIndex, teamA, teamB) {
   }
   return out;
 }
+
+//  ADMIN: Undo the latest generated knockout draw (deletes fixtures; reverts stats/history of any saved results)
+window.soloUndoKnockoutDraw = async function(stageKey) {
+  const st = document.getElementById('soloAutoStatus');
+  await fetchSoloData();
+  let latest = null;
+  SOLO_STAGES.forEach(s => { if (soloKnockoutCache.some(m => m.stage === s.key)) latest = s.key; });
+  stageKey = stageKey || latest;
+  if (!stageKey || !soloKnockoutCache.some(m => m.stage === stageKey)) { st.textContent = 'Undo korar moto kono draw nei'; st.style.color = 'var(--red)'; return; }
+  if (stageKey !== latest) { st.textContent = `Age ${latest} draw undo korun — sob theke notun round-i undo kora jay`; st.style.color = 'var(--red)'; return; }
+  const sName = (SOLO_STAGES.find(s => s.key === stageKey) || {}).name || stageKey;
+  const docs = soloKnockoutCache.filter(m => m.stage === stageKey);
+  const done = docs.filter(m => m.status === 'completed');
+  const warn = done.length ? `\n\n⚠️ ${done.length}টা leg-এর result save করা আছে — সেগুলোর stats ও match history-ও revert হবে।` : '';
+  if (!confirm(`${sName} draw undo করবে? ${docs.length}টা fixture delete হয়ে যাবে।${warn}\n\nতারপর আবার নতুন করে draw করতে পারবে। Continue?`)) { st.textContent = 'Cancelled.'; return; }
+  st.textContent = '⏳ Undoing draw...'; st.style.color = 'var(--text3)';
+  try {
+    let delHist = 0;
+    if (done.length) {
+      const hr = await fetch(`${F4M_DB}/matches.json`);
+      const hist = (await hr.json()) || {};
+      const pairKeys = new Set();
+      done.forEach(m => { const a = soloPlayerName(m.player1Uid), b = soloPlayerName(m.player2Uid); pairKeys.add(a + '|' + b); pairKeys.add(b + '|' + a); });
+      const del = Object.entries(hist).filter(([k, v]) => v && v.tournament === 'Solo Knockout' && pairKeys.has(v.home_team + '|' + v.away_team));
+      for (const [k] of del) { await fetch(`${F4M_DB}/matches/${k}.json`, { method: 'DELETE' }); delHist++; }
+      for (const m of done) await soloRevertMatchStats(m);
+    }
+    for (const m of docs) await fetch(`${SOLO_DB}/${soloPath()}/knockout/${m.id}.json`, { method: 'DELETE' });
+    soloKnockoutCache = [];
+    window._allUsersCache = []; window._allUsersCacheTime = 0; window._mainRankingCache = null; window.rankingData = [];
+    st.textContent = `✅ ${sName} draw undo হয়েছে — ${docs.length}টা fixture delete${done.length ? `, ${done.length}টা result revert, ${delHist}টা history entry delete` : ''}. এখন আবার draw করতে পারো।`;
+    st.style.color = 'var(--green)';
+  } catch (e) {
+    console.error(e);
+    st.textContent = '❌ Undo fail: ' + e.message; st.style.color = 'var(--red)';
+  }
+  await fetchSoloData();
+  renderSoloAdminKnockoutList();
+};
 
 //  ADMIN: Reset all results of a knockout stage (default R16) — stats + match history + scores
 window.soloResetKnockoutStageResults = async function(stageKey) {
