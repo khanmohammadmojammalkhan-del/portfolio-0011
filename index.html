@@ -2158,7 +2158,7 @@ if (document.readyState === 'loading') {
           <span>📍 <span id="ppDistrict">—</span></span>
         </div>
         <div id="ppUidDeviceRow" class="pp-meta" style="display:none;margin-top:4px">
-          <span id="ppUidWrap" style="display:none">🆔 <span id="ppGameUid">—</span></span>
+          <span id="ppUidWrap" style="display:none" title="Konami User ID">🆔 <span id="ppGameUid">—</span></span>
           <span id="ppDeviceWrap" style="display:none">📱 <span id="ppDeviceName">—</span></span>
         </div>
       </div>
@@ -4552,6 +4552,17 @@ if (document.readyState === 'loading') {
       </select>
     </div>
 
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Konami User ID (optional)</label>
+        <input type="text" class="form-input" id="adminEditGameUid" placeholder="যেমন: 123 456 789">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Device Name (optional)</label>
+        <input type="text" class="form-input" id="adminEditDeviceName" placeholder="যেমন: iPhone 11">
+      </div>
+    </div>
+
     <div class="alert alert-error" id="adminEditError"></div>
     <div class="alert alert-success" id="adminEditSuccess"></div>
 
@@ -4626,6 +4637,17 @@ if (document.readyState === 'loading') {
         <option value="MF">MF — মধ্যমাঠ</option>
         <option value="FW">FW — আক্রমণভাগ</option>
       </select>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Konami User ID (optional)</label>
+        <input type="text" class="form-input" id="addPlayerGameUid" placeholder="যেমন: 123 456 789">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Device Name (optional)</label>
+        <input type="text" class="form-input" id="addPlayerDeviceName" placeholder="যেমন: iPhone 11">
+      </div>
     </div>
 
     <div class="alert alert-error" id="addPlayerError"></div>
@@ -6777,6 +6799,8 @@ window.openAdminEditProfile = function(uid) {
   document.getElementById('adminEditClub').value = p.club || '';
   document.getElementById('adminEditDistrict').value = p.district || '';
   document.getElementById('adminEditPosition').value = p.position || '';
+  document.getElementById('adminEditGameUid').value = p.gameUid || '';
+  document.getElementById('adminEditDeviceName').value = p.deviceName || '';
   const prev = document.getElementById('adminEditAvatarPreview');
   prev.innerHTML = p.avatarUrl ? `<img src="${p.avatarUrl}" style="width:100%;height:100%;object-fit:cover">` : '🎮';
   window._adminEditAvatarUrl = p.avatarUrl || null;
@@ -6797,6 +6821,8 @@ window.saveAdminEditProfile = async function() {
   const club = document.getElementById('adminEditClub').value.trim();
   const district = document.getElementById('adminEditDistrict').value;
   const position = document.getElementById('adminEditPosition').value;
+  const gameUid = document.getElementById('adminEditGameUid').value.trim();
+  const deviceName = document.getElementById('adminEditDeviceName').value.trim();
   const errEl = document.getElementById('adminEditError');
   const sucEl = document.getElementById('adminEditSuccess');
   errEl.classList.remove('show'); sucEl.classList.remove('show');
@@ -6815,6 +6841,8 @@ window.saveAdminEditProfile = async function() {
     club,
     district,
     position: position || null,
+    gameUid: gameUid,
+    deviceName: deviceName,
     avatarUrl: window._adminEditAvatarUrl || p.avatarUrl || ''
   };
 
@@ -6840,6 +6868,8 @@ window.openAddPlayerModal = function() {
   document.getElementById('addPlayerClub').value = '';
   document.getElementById('addPlayerDistrict').value = '';
   document.getElementById('addPlayerPosition').value = '';
+  document.getElementById('addPlayerGameUid').value = '';
+  document.getElementById('addPlayerDeviceName').value = '';
   document.getElementById('addPlayerAvatarPreview').innerHTML = '🎮';
   window._addPlayerAvatarUrl = null;
   document.getElementById('addPlayerError').classList.remove('show');
@@ -6880,6 +6910,8 @@ window.saveNewPlayer = async function() {
   const club = document.getElementById('addPlayerClub').value.trim();
   const district = document.getElementById('addPlayerDistrict').value;
   const position = document.getElementById('addPlayerPosition').value;
+  const gameUid = document.getElementById('addPlayerGameUid').value.trim();
+  const deviceName = document.getElementById('addPlayerDeviceName').value.trim();
   const errEl = document.getElementById('addPlayerError');
   const sucEl = document.getElementById('addPlayerSuccess');
   errEl.classList.remove('show'); sucEl.classList.remove('show');
@@ -6898,6 +6930,8 @@ window.saveNewPlayer = async function() {
   const playerData = {
     uid, name, username, club, district,
     position: position || null,
+    gameUid: gameUid,
+    deviceName: deviceName,
     avatarUrl: window._addPlayerAvatarUrl || '',
     matches: 0, wins: 0, draws: 0, losses: 0,
     goalsFor: 0, goalsAgainst: 0, cleanSheets: 0,
