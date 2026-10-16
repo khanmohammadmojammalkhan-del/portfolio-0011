@@ -1951,6 +1951,19 @@ if (document.readyState === 'loading') {
   font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px;
   background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;
 }
+/* Konami User ID + Device Name — highlighted chips */
+#ppUidDeviceRow { gap:10px;margin-top:10px !important; }
+#ppUidDeviceRow > span {
+  font-size:15px;font-weight:800;letter-spacing:0.03em;color:var(--text);gap:8px;
+  padding:9px 18px;border-radius:26px;line-height:1.2;
+  background:linear-gradient(135deg,var(--tier-glow),var(--bg2));
+  border:1.5px solid var(--tier-a);box-shadow:0 3px 12px var(--tier-glow);
+}
+#ppUidDeviceRow > span > span {
+  background:none;border:0;padding:0;border-radius:0;
+  font-size:inherit;font-weight:inherit;letter-spacing:inherit;color:inherit;
+}
+@media (max-width:420px){ #ppUidDeviceRow > span { font-size:14px;padding:8px 14px; } }
 
 /* Compare button */
 .pp-cmp-wrap { flex-shrink:0;padding-bottom:4px; }
@@ -10478,9 +10491,9 @@ window.openPublicProfile = async function(uid) {
     const devWrap = document.getElementById('ppDeviceWrap');
     const hasUid = !!(p.gameUid && String(p.gameUid).trim());
     const hasDev = !!(p.deviceName && String(p.deviceName).trim());
-    if (hasUid) { document.getElementById('ppGameUid').textContent = p.gameUid; uidWrap.style.display = 'inline'; }
+    if (hasUid) { document.getElementById('ppGameUid').textContent = p.gameUid; uidWrap.style.display = 'flex'; }
     else { uidWrap.style.display = 'none'; }
-    if (hasDev) { document.getElementById('ppDeviceName').textContent = p.deviceName; devWrap.style.display = 'inline'; }
+    if (hasDev) { document.getElementById('ppDeviceName').textContent = p.deviceName; devWrap.style.display = 'flex'; }
     else { devWrap.style.display = 'none'; }
     uidRow.style.display = (hasUid || hasDev) ? 'flex' : 'none';
   }
