@@ -21660,9 +21660,9 @@ window.aiqaUseAsFaq = aiqaUseAsFaq;
 })();
 </script>
 <script>
-/* ═══ ADMIN: Player Match History Fixer ═══
-   প্লেয়ারের সব সোর্সের (flat/season/auction/4-man/solo) ম্যাচ একসাথে দেখায়,
-   স্কোর এডিট/সোয়াপ করা যায়। উপরে history W-D-L আর profile stats পাশাপাশি দেখায়। */
+/* ═══ ADMIN: Player Match History Fixer (v2) ═══
+   প্রোফাইলের মতোই ডুপ্লিকেট flat-Solo কপি লুকিয়ে একই ম্যাচ একবার দেখায়।
+   Save করলে আসল ম্যাচ + কপি দুটোই আপডেট হয়। */
 (function(){
   const DB = () => window.ACADEMY_CONFIG.databaseURL.replace(/\/+$/,'');
   const gj = async p => { try { const r = await fetch(`${DB()}/${p}.json`); const d = await r.json(); return (d && !d.error) ? d : null; } catch(e){ return null; } };
@@ -21670,11 +21670,13 @@ window.aiqaUseAsFaq = aiqaUseAsFaq;
   setInterval(() => { const w = document.getElementById('ppHistFixWrap'); if (w) w.style.display = window._isAdminSession ? 'block' : 'none'; }, 800);
 
   async function collect(uid, name) {
-    const rows = [];
+    const users = await gj('users') || {};
+    const nameOf = u => (users[u] && users[u].name) || '—';
+    const flatRows = [], rows = [];
     const flat = (obj, base, tag) => Object.entries(obj || {}).forEach(([id, m]) => {
       if (!m || m.status !== 'completed' || (m.home_team !== name && m.away_team !== name)) return;
       const h = m.home_team === name;
-      rows.push({ src: tag + (m.tournament ? ' · ' + m.tournament : ''), path: `${base}/${id}`, myK: h ? 'home_score' : 'away_score', opK: h ? 'away_score' : 'home_score',
+      flatRows.push({ src: tag, tour: m.tournament || '', path: `${base}/${id}`, myK: h ? 'home_score' : 'away_score', opK: h ? 'away_score' : 'home_score',
         my: n(h ? m.home_score : m.away_score), op: n(h ? m.away_score : m.home_score), opp: h ? m.away_team : m.home_team, t: m.addedAt || m.date || '' });
     });
     flat(await gj('matches'), 'matches', 'Flat');
@@ -21686,33 +21688,58 @@ window.aiqaUseAsFaq = aiqaUseAsFaq;
       if (!b || b.status !== 'completed' || b.homeScore == null || b.awayScore == null) return;
       const p1 = b.player1uid === uid, p2 = b.player2uid === uid; if (!p1 && !p2) return;
       rows.push({ src: 'Auction', path: `tournament/matches/${key}`, myK: p1 ? 'homeScore' : 'awayScore', opK: p1 ? 'awayScore' : 'homeScore',
-        my: n(p1 ? b.homeScore : b.awayScore), op: n(p1 ? b.awayScore : b.homeScore), opp: (p1 ? b.player2Name : b.player1Name) || '—', t: b.updatedAt || b.createdAt || '' });
+        my: n(p1 ? b.homeScore : b.awayScore), op: n(p1 ? b.awayScore : b.homeScore), opp: nameOf(p1 ? b.player2uid : b.player1uid), t: b.updatedAt || b.createdAt || '' });
     });
-
     const f4m = await gj('typ4man/matchdays');
     Object.entries(f4m || {}).forEach(([md, d]) => Object.entries((d && d.bouts) || {}).forEach(([bk, b]) => {
       if (!b.done || b.scoreA == null || b.scoreB == null) return;
       const a = b.playerAUid === uid, c = b.playerBUid === uid; if (!a && !c) return;
       rows.push({ src: '4-Man', path: `typ4man/matchdays/${md}/bouts/${bk}`, myK: a ? 'scoreA' : 'scoreB', opK: a ? 'scoreB' : 'scoreA',
-        my: n(a ? b.scoreA : b.scoreB), op: n(a ? b.scoreB : b.scoreA), opp: '—', t: d.updatedAt || d.createdAt || d.scheduledDate || '' });
+        my: n(a ? b.scoreA : b.scoreB), op: n(a ? b.scoreB : b.scoreA), opp: nameOf(a ? b.playerBUid : b.playerAUid), t: d.updatedAt || d.createdAt || d.scheduledDate || '' });
     }));
-
     const solo = await gj('typsolo');
+    const soloRows = [];
     if (solo) {
       const sets = [{ base: 'typsolo', node: solo }];
       Object.entries(solo.tournamentsData || {}).forEach(([tid, node]) => sets.push({ base: `typsolo/tournamentsData/${tid}`, node }));
       sets.forEach(({ base, node }) => ['matches', 'knockout'].forEach(key => Object.entries((node && node[key]) || {}).forEach(([bid, b]) => {
         if (!b || b.status !== 'completed' || b.player1Score == null || b.player2Score == null) return;
         const p1 = b.player1Uid === uid, p2 = b.player2Uid === uid; if (!p1 && !p2) return;
-        rows.push({ src: 'Solo ' + key, path: `${base}/${key}/${bid}`, myK: p1 ? 'player1Score' : 'player2Score', opK: p1 ? 'player2Score' : 'player1Score',
-          my: n(p1 ? b.player1Score : b.player2Score), op: n(p1 ? b.player2Score : b.player1Score), opp: '—', t: b.updatedAt || b.createdAt || '' });
+        soloRows.push({ src: 'Solo ' + key, tour: key === 'knockout' ? 'Solo Knockout' : 'Solo', path: `${base}/${key}/${bid}`, myK: p1 ? 'player1Score' : 'player2Score', opK: p1 ? 'player2Score' : 'player1Score',
+          my: n(p1 ? b.player1Score : b.player2Score), op: n(p1 ? b.player2Score : b.player1Score), opp: nameOf(p1 ? b.player2Uid : b.player1Uid), t: b.updatedAt || b.createdAt || '' });
       })));
     }
+    // flat Solo কপি → typsolo ম্যাচের সাথে জোড়া লাগাও (প্রোফাইলের dedupe-এর মতো)
+    const pool = flatRows.filter(r => r.tour === 'Solo' || r.tour === 'Solo Knockout');
+    const used = new Set();
+    soloRows.forEach(s => {
+      const same = r => !used.has(r) && r.tour === s.tour && r.opp === s.opp;
+      const hit = pool.find(r => same(r) && r.my === s.my && r.op === s.op) || pool.find(same);
+      if (hit) { used.add(hit); s.twin = hit; }
+      rows.push(s);
+    });
+    flatRows.forEach(r => { if (!used.has(r)) rows.push(r); });
     return rows.sort((a, b) => String(a.t).localeCompare(String(b.t)));
   }
 
   const res = r => r.my > r.op ? 'W' : r.my < r.op ? 'L' : 'D';
   const col = x => x === 'W' ? '#16a34a' : x === 'L' ? '#dc2626' : '#ca8a04';
+
+  // স্ট্যাটসের সাথে মেলাতে কোন L গুলো উল্টানো দরকার — গোল মিলিয়ে অনুমান
+  function suggest(rows, st) {
+    const c = { W: 0, D: 0, L: 0 }; rows.forEach(r => c[res(r)]++);
+    const k = n(st.w) - c.W;
+    if (!(k > 0) || n(st.d) !== c.D || c.L - k !== n(st.l)) return new Set();
+    const Ls = rows.map((r, i) => [r, i]).filter(([r]) => res(r) === 'L');
+    const base = rows.reduce((s, r) => s + r.my, 0);
+    const found = [];
+    (function go(start, pick, sum) {
+      if (found.length > 5) return;
+      if (pick.length === k) { if (sum === n(st.goals)) found.push([...pick]); return; }
+      for (let j = start; j < Ls.length; j++) go(j + 1, [...pick, Ls[j][1]], sum + (Ls[j][0].op - Ls[j][0].my));
+    })(0, [], base);
+    return found.length === 1 ? new Set(found[0]) : new Set();
+  }
 
   window.openHistoryFixer = async function() {
     if (!window._isAdminSession) return alert('Admin login লাগবে');
@@ -21726,12 +21753,17 @@ window.aiqaUseAsFaq = aiqaUseAsFaq;
     window._hfRows = rows;
     const c = { W: 0, D: 0, L: 0 }; rows.forEach(r => c[res(r)]++);
     const st = window._ppCurrentStats || {};
+    const sg = suggest(rows, st);
+    const ok = c.W === n(st.w) && c.D === n(st.d) && c.L === n(st.l);
     box.innerHTML = `<div style="background:#fff;color:#222;border-radius:12px;max-width:640px;width:100%;max-height:90vh;overflow:auto;padding:16px;font-family:inherit">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>🛠️ ${p.name} — Match History Fix</b><button onclick="document.getElementById('histFixModal').remove()" style="border:0;background:none;font-size:20px;cursor:pointer">✕</button></div>
-      <div style="font-size:12px;margin-bottom:10px;padding:8px;background:#f5efe0;border-radius:8px">History: <b>${c.W}W ${c.D}D ${c.L}L</b> (${rows.length}) &nbsp;|&nbsp; Profile stats: <b>${st.w ?? '?'}W ${st.d ?? '?'}D ${st.l ?? '?'}L</b> (${st.m ?? '?'}) — দুটো মিললে ঠিক আছে।</div>
-      ${rows.map((r, i) => `<div style="display:flex;gap:6px;align-items:center;border-bottom:1px solid #eee;padding:6px 0;font-size:12px">
+      <div style="font-size:12px;margin-bottom:6px;padding:8px;background:${ok ? '#dcfce7' : '#f5efe0'};border-radius:8px">
+        হিস্ট্রি এখন: <b>${c.W}W ${c.D}D ${c.L}L</b> (${rows.length} ম্যাচ)<br>প্রোফাইল স্ট্যাটস: <b>${st.w ?? '?'}W ${st.d ?? '?'}D ${st.l ?? '?'}L</b> (${st.m ?? '?'} ম্যাচ)<br>
+        ${ok ? '✅ দুটো মিলে গেছে!' : '❌ মেলেনি — যেগুলোতে ⭐ আছে সেগুলোতে ⇄ চাপো।'}</div>
+      <div style="font-size:11px;color:#777;margin-bottom:8px">⇄ = আমার স্কোর আর প্রতিপক্ষের স্কোর অদলবদল করে সেভ করে।</div>
+      ${rows.map((r, i) => `<div style="display:flex;gap:6px;align-items:center;border-bottom:1px solid #eee;padding:6px 0;font-size:12px;${sg.has(i) ? 'background:#fff7d6' : ''}">
         <span style="width:22px;height:22px;border-radius:4px;background:${col(res(r))};color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:800">${res(r)}</span>
-        <span style="flex:1;min-width:0">${r.opp} <span style="color:#888">· ${r.src} · ${String(r.t).slice(0,10)}</span></span>
+        <span style="flex:1;min-width:0">${sg.has(i) ? '⭐ ' : ''}<b>${r.opp}</b> <span style="color:#888">· ${r.src} · ${String(r.t).slice(0,10)}</span></span>
         <input id="hf_my_${i}" type="number" min="0" value="${r.my}" style="width:44px"> - <input id="hf_op_${i}" type="number" min="0" value="${r.op}" style="width:44px">
         <button onclick="hfSwap(${i})" title="Swap" style="cursor:pointer">⇄</button>
         <button onclick="hfSave(${i})" style="cursor:pointer;background:#7c1d3a;color:#fff;border:0;border-radius:6px;padding:4px 8px">Save</button></div>`).join('')}
@@ -21746,9 +21778,11 @@ window.aiqaUseAsFaq = aiqaUseAsFaq;
     const r = window._hfRows[i];
     const my = n(document.getElementById('hf_my_' + i).value), op = n(document.getElementById('hf_op_' + i).value);
     if (!confirm(`${r.opp}: ${r.my}-${r.op} → ${my}-${op} করবে?`)) return;
-    const body = {}; body[r.myK] = my; body[r.opK] = op;
-    const resp = await fetch(`${DB()}/${r.path}.json`, { method: 'PATCH', body: JSON.stringify(body) });
-    if (!resp.ok) return alert('❌ Save হয়নি (' + resp.status + ')');
+    for (const t of [r, r.twin].filter(Boolean)) {
+      const body = {}; body[t.myK] = my; body[t.opK] = op;
+      const resp = await fetch(`${DB()}/${t.path}.json`, { method: 'PATCH', body: JSON.stringify(body) });
+      if (!resp.ok) return alert('❌ Save হয়নি (' + resp.status + ')');
+    }
     try { invalidateCache('matches'); } catch(e) {}
     window._allUsersCache = []; window._allUsersCacheTime = 0;
     const p = window._ppCurrentPlayer;
