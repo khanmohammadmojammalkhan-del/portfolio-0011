@@ -4162,6 +4162,7 @@ if (document.readyState === 'loading') {
     <span id="soloGenStatus" style="font-size:13px;display:block;margin-top:8px"></span>
     <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--border)">
       <button class="btn btn-outline" onclick="soloRepairStats()" style="padding:8px 16px;font-size:12px">🛠️ Repair Solo Stats (double count fix)</button>
+      <button class="btn btn-outline" onclick="soloRemoveDuplicateFixtures()" style="padding:8px 16px;font-size:12px">🧹 Remove Duplicate Fixtures</button>
       <span id="soloRepairStatus" style="font-size:12px;display:block;margin-top:6px;color:var(--text3)"></span>
     </div>
   </div>
@@ -14477,33 +14478,51 @@ window.deleteSoloGroup = async function(id) {
 
 // ── ADMIN: Round-robin fixture generation ──
 window.generateSoloGroupFixtures = async function() {
-  const groupId = document.getElementById('soloGenGroupSelect').value;
-  const status = document.getElementById('soloGenStatus');
-  if (!groupId) { status.textContent = '⚠️ একটা Group বাছাই করো।'; status.style.color = 'var(--red)'; return; }
-  const g = soloGroupsCache.find(x => x.id === groupId);
-  if (!g || (g.playerUids || []).length < 2) { status.textContent = '⚠️ Group-এ অন্তত ২ জন player থাকতে হবে।'; status.style.color = 'var(--red)'; return; }
-  status.textContent = '⏳ Generating...'; status.style.color = 'var(--text3)';
+  if (window._soloGenBusy) return;           // double-click lock
+  window._soloGenBusy = true;
+  try {
+    const groupId = document.getElementById('soloGenGroupSelect').value;
+    const status = document.getElementById('soloGenStatus');
+    if (!groupId) { status.textContent = '⚠️ একটা Group বাছাই করো।'; status.style.color = 'var(--red)'; return; }
+    await fetchSoloData();                   // fresh data, stale cache fix
+    const g = soloGroupsCache.find(x => x.id === groupId);
+    if (!g || (g.playerUids || []).length < 2) { status.textContent = '⚠️ Group-এ অন্তত ২ জন player থাকতে হবে।'; status.style.color = 'var(--red)'; return; }
+    status.textContent = '⏳ Generating...'; status.style.color = 'var(--text3)';
 
-  // Remove existing matches for this group first (regenerate clean)
-  const existing = soloMatchesCache.filter(m => m.groupId === groupId);
-  const doneOnes = existing.filter(m => m.status === 'completed');
-  if (doneOnes.length && !confirm(`এই group-এ ${doneOnes.length}টা completed match আছে। Regenerate করলে এগুলোর result মুছে যাবে (player stats-ও revert হবে)। Continue?`)) { status.textContent = ''; return; }
-  for (const m of doneOnes) await soloRevertMatchStats(m);
-  window._allUsersCache = [];
-  for (const m of existing) { await fetch(`${SOLO_DB}/${soloPath()}/matches/${m.id}.json`, { method: 'DELETE' }); }
+    const existing = soloMatchesCache.filter(m => m.groupId === groupId);
+    const doneOnes = existing.filter(m => m.status === 'completed');
+    if (doneOnes.length && !confirm(`এই group-এ ${doneOnes.length}টা completed match আছে। Regenerate করলে এগুলোর result মুছে যাবে (player stats-ও revert হবে)। Continue?`)) { status.textContent = ''; return; }
+    for (const m of doneOnes) await soloRevertMatchStats(m);
+    window._allUsersCache = [];
+    for (const m of existing) { await fetch(`${SOLO_DB}/${soloPath()}/matches/${m.id}.json`, { method: 'DELETE' }); }
 
-  const players = g.playerUids;
-  for (let i = 0; i < players.length; i++) {
-    for (let j = i + 1; j < players.length; j++) {
-      await fetch(`${SOLO_DB}/${soloPath()}/matches.json`, {
-        method: 'POST',
-        body: JSON.stringify({ groupId, player1Uid: players[i], player2Uid: players[j], player1Score: null, player2Score: null, status: 'pending', createdAt: new Date().toISOString() })
-      });
-    }
-  }
-  status.textContent = `✅ ${players.length * (players.length - 1) / 2} matches generate হয়েছে!`; status.style.color = 'var(--green)';
+    // single round-robin, fixed keys -> same group can never get duplicates
+    const now = new Date().toISOString(), batch = {};
+    let n = 0;
+    soloRoundRobin(g.playerUids).forEach((md, r) => md.forEach(([p1, p2]) => {
+      batch[`${groupId}_m${String(++n).padStart(2, '0')}`] = { groupId, matchday: r + 1, player1Uid: p1, player2Uid: p2, player1Score: null, player2Score: null, status: 'pending', createdAt: now };
+    }));
+    await fetch(`${SOLO_DB}/${soloPath()}/matches.json`, { method: 'PATCH', body: JSON.stringify(batch) });
+    status.textContent = `✅ ${n} matches generate হয়েছে!`; status.style.color = 'var(--green)';
+    await loadSoloAdminMatches();
+    setTimeout(() => status.textContent = '', 4000);
+  } finally { window._soloGenBusy = false; }
+};
+
+// ── ADMIN: Remove duplicate group fixtures (same pair twice in a group). Keeps completed one, else the first. ──
+window.soloRemoveDuplicateFixtures = async function() {
+  await fetchSoloData();
+  const seen = {}, del = [];
+  const sorted = [...soloMatchesCache].sort((a, b) => (b.status === 'completed') - (a.status === 'completed'));
+  sorted.forEach(m => {
+    const k = m.groupId + '|' + [m.player1Uid, m.player2Uid].sort().join('|');
+    if (seen[k]) del.push(m); else seen[k] = m;
+  });
+  if (!del.length) { alert('✅ কোনো duplicate match নেই।'); return; }
+  if (!confirm(`${del.length}টা duplicate match পাওয়া গেছে। মুছে দেব?`)) return;
+  for (const m of del) await fetch(`${SOLO_DB}/${soloPath()}/matches/${m.id}.json`, { method: 'DELETE' });
   await loadSoloAdminMatches();
-  setTimeout(() => status.textContent = '', 4000);
+  alert(`✅ ${del.length}টা duplicate মুছে গেছে।`);
 };
 
 // ── ADMIN: Score entry (group stage) ──
