@@ -1240,6 +1240,26 @@ select.form-input option { background: var(--card); color: var(--text); }
 .solo-plist li::before{content:counter(p);width:22px;height:22px;border-radius:50%;border:1px solid var(--border);color:var(--gold);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .solo-empty{text-align:center;padding:48px 16px;color:var(--text3);font-family:'Fraunces','Hind Siliguri',serif;letter-spacing:.04em}
 .solo-empty .solo-crest{width:56px;height:56px;margin:0 auto 12px;opacity:.5}
+/* League (36-player / 9-pot) additions */
+.solo-tbl tr.po{background:rgba(214,180,110,.035)}
+.solo-tbl tr.po td:first-child{box-shadow:inset 3px 0 0 rgba(214,180,110,.4)}
+.solo-tbl tr.el{opacity:.62}
+.solo-tbl tr.el td:first-child{box-shadow:inset 3px 0 0 rgba(160,60,60,.55)}
+.solo-st{display:inline-block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid var(--border);color:var(--text3);white-space:nowrap}
+.solo-st.d{color:var(--gold);border-color:var(--gold);background:rgba(214,180,110,.12)}
+.solo-st.p{color:var(--text2);border-color:rgba(214,180,110,.45)}
+.solo-st.e{color:#b9575f;border-color:rgba(185,87,95,.5)}
+.solo-legend3{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 16px;font-size:11px;color:var(--text3);letter-spacing:.06em;margin:-4px 0 18px}
+.solo-legend3 i{width:16px;height:10px;display:inline-block;margin-right:6px;vertical-align:-1px}
+.solo-struct-pill{display:inline-block;margin:0 auto 14px;padding:6px 16px;border:1px solid var(--gold);border-radius:999px;color:var(--gold);font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+.solo-pots{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;margin:0 0 20px}
+.solo-pot{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center}
+.solo-pot b{display:block;font-size:10.5px;letter-spacing:.2em;color:var(--gold)}
+.solo-pot strong{display:block;font-family:'Fraunces','Hind Siliguri',serif;font-size:26px;color:var(--text);line-height:1.2;margin:4px 0 0}
+.solo-pot small{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3)}
+.solo-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:16px}
+.solo-card h4{margin:0 0 10px;font-family:'Fraunces','Hind Siliguri',serif;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.solo-card ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.9;color:var(--text2)}
 </style>
 <style id="classy-theme">
 /* Classy refinement: deep wine + parchment + champagne gold, applied site-wide */
@@ -2921,6 +2941,7 @@ if (document.readyState === 'loading') {
       <button class="trn-tab solo-tab" onclick="switchSoloTab('fixtures')">Fixtures</button>
       <button class="trn-tab solo-tab" onclick="switchSoloTab('knockout')">Knockout</button>
       <button class="trn-tab solo-tab" onclick="switchSoloTab('groups')">Groups</button>
+      <button class="trn-tab solo-tab" onclick="switchSoloTab('structure')">Structure</button>
     </div>
 
     <div class="solo-content active" id="solotab-standings">
@@ -2939,6 +2960,10 @@ if (document.readyState === 'loading') {
       <div id="soloKnockoutWrap">
         <div style="text-align:center;padding:60px;color:var(--text3)"><span class="spinner"></span> Loading...</div>
       </div>
+    </div>
+
+    <div class="solo-content" id="solotab-structure">
+      <div id="soloStructureWrap"></div>
     </div>
 
     <div class="solo-content" id="solotab-groups">
@@ -4167,7 +4192,7 @@ if (document.readyState === 'loading') {
       <div class="trn-admin-section-title">🎲 Group Draw (টুর্নামেন্টের শুরুতে একবার)</div>
       <input type="hidden" id="soloAutoFormat" value="24">
     <div class="form-group">
-      <label class="form-label">Players — ঠিক ২৪ বা ৩২ জন সিলেক্ট করো (নামে ট্যাপ করলেই হবে)</label>
+      <label class="form-label">Players — ঠিক ২৪, ৩২ বা ৩৬ জন সিলেক্ট করো (নামে ট্যাপ করলেই হবে) · ৩৬ জন = 9 Pot League format</label>
       <div id="soloAutoCount" style="margin:2px 0 10px;font-size:14px;font-weight:700"></div>
       <select class="form-input" id="soloAutoPlayers" multiple size="12" style="display:none" onchange="soloAutoCount()"></select>
     </div>
@@ -4176,7 +4201,7 @@ if (document.readyState === 'loading') {
       <select class="form-input" id="soloFixedGroup" style="max-width:260px;margin-bottom:10px">
         <option value="">-- কোনো fixed group নেই --</option>
         <option value="0">Group A</option><option value="1">Group B</option><option value="2">Group C</option><option value="3">Group D</option>
-        <option value="4">Group E</option><option value="5">Group F</option><option value="6">Group G</option><option value="7">Group H</option>
+        <option value="4">Group E</option><option value="5">Group F</option><option value="6">Group G</option><option value="7">Group H</option><option value="8">Group I / Pot 9</option>
       </select>
       <div id="soloFixedCount" style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text3)"></div>
       <select class="form-input" id="soloFixedPlayers" multiple size="6" style="display:none" onchange="soloFixedChanged()"></select>
@@ -4190,7 +4215,7 @@ if (document.readyState === 'loading') {
         <p style="font-size:12px;color:var(--text3);margin-bottom:10px">কোনো round-এর সব score মুছে pending করে দেয় এবং player profile stats ও match history ঠিক করে দেয়। Fixture থাকে।</p>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <select class="form-input" id="soloResetStage" style="max-width:200px;padding:6px 10px;font-size:13px">
-            <option value="R16">Round of 16</option><option value="QF">Quarter Final</option><option value="SF">Semi Final</option><option value="F">Final</option>
+            <option value="PO">Playoffs (36-player format)</option><option value="R16">Round of 16</option><option value="QF">Quarter Final</option><option value="SF">Semi Final</option><option value="F">Final</option>
           </select>
           <button class="btn btn-outline" onclick="soloResetKnockoutStageResults(document.getElementById('soloResetStage').value)" style="padding:8px 18px;font-size:12px;color:var(--red);border-color:var(--red)">🧹 Reset Results</button>
         </div>
@@ -14404,12 +14429,13 @@ window.switchSoloTab = function(tab) {
   if (tab === 'fixtures') loadSoloFixtures();
   if (tab === 'knockout') loadSoloKnockoutPublic();
   if (tab === 'groups') loadSoloGroupsPublic();
+  if (tab === 'structure') loadSoloStructure();
 };
 
 
 const SOLO_CREST = `<svg class="solo-emblem" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle class="se-ring" cx="50" cy="50" r="47" stroke-width="1.6"/><circle class="se-ring2" cx="50" cy="50" r="43" stroke-width=".7"/><g class="se-leaf"><ellipse cx="33.6" cy="76.3" rx="6.2" ry="2.5" transform="rotate(70 33.6 76.3)"/><ellipse cx="25.2" cy="68.7" rx="6.2" ry="2.5" transform="rotate(48 25.2 68.7)"/><ellipse cx="20.2" cy="58.5" rx="6.2" ry="2.5" transform="rotate(26 20.2 58.5)"/><ellipse cx="19.1" cy="47.3" rx="6.2" ry="2.5" transform="rotate(4 19.1 47.3)"/><ellipse cx="22.1" cy="36.4" rx="6.2" ry="2.5" transform="rotate(-18 22.1 36.4)"/><ellipse cx="28.9" cy="27.3" rx="6.2" ry="2.5" transform="rotate(-40 28.9 27.3)"/><ellipse cx="38.4" cy="21.3" rx="6.2" ry="2.5" transform="rotate(-62 38.4 21.3)"/><ellipse cx="66.4" cy="76.3" rx="6.2" ry="2.5" transform="rotate(-70 66.4 76.3)"/><ellipse cx="74.8" cy="68.7" rx="6.2" ry="2.5" transform="rotate(-48 74.8 68.7)"/><ellipse cx="79.8" cy="58.5" rx="6.2" ry="2.5" transform="rotate(-26 79.8 58.5)"/><ellipse cx="80.9" cy="47.3" rx="6.2" ry="2.5" transform="rotate(-4 80.9 47.3)"/><ellipse cx="77.9" cy="36.4" rx="6.2" ry="2.5" transform="rotate(18 77.9 36.4)"/><ellipse cx="71.1" cy="27.3" rx="6.2" ry="2.5" transform="rotate(40 71.1 27.3)"/><ellipse cx="61.6" cy="21.3" rx="6.2" ry="2.5" transform="rotate(62 61.6 21.3)"/></g><path class="se-star" d="M50 13.5l2.3 4.9 5.3.7-3.9 3.7 1 5.3-4.7-2.6-4.7 2.6 1-5.3-3.9-3.7 5.3-.7z"/><text class="se-s" x="50" y="63" text-anchor="middle">S</text><path class="se-ring2" d="M40 71h20" stroke-width=".9"/></svg>`;
 function soloEmpty(msg) { return `<div class="solo-empty"><div class="solo-crest">${SOLO_CREST}</div>${msg}</div>`; }
-function soloGroupLetter(g) { const n = (g.name || '').replace(/^group\s*/i, '').trim(); return (n || '?').slice(0, 2).toUpperCase(); }
+function soloGroupLetter(g) { const n = (g.name || '').replace(/^(group|pot)\s*/i, '').trim(); return (n || '?').slice(0, 2).toUpperCase(); }
 
 window.loadSoloStandings = async function() {
   await fetchSoloData();
@@ -14417,6 +14443,7 @@ window.loadSoloStandings = async function() {
   const wrap = document.getElementById('soloStandingsWrap');
   if (!wrap) return;
   if (!soloGroupsCache.length) { wrap.innerHTML = soloEmpty('Group ekhono toiri hoyni'); return; }
+  if (soloIsLeague()) { wrap.innerHTML = soloLeagueStandingsHTML(); return; }
   const q = soloQualCount();
   const legend = `<div class="solo-legend"><i></i>Qualified for Round of 16</div>`;
   wrap.innerHTML = legend + soloGroupsCache.map(g => {
@@ -14476,7 +14503,7 @@ window.loadSoloKnockoutPublic = async function() {
   if (!soloKnockoutCache.length) { wrap.innerHTML = soloEmpty('Knockout ekhono shuru hoyni'); return; }
   const nm = uid => soloPlayerName(uid);
   let html = '';
-  SOLO_STAGES.forEach(st => {
+  soloStages().forEach(st => {
     const ties = soloTiesOfStage(st.key);
     if (!ties.length) return;
     html += `<div style="margin-bottom:26px">
@@ -14855,9 +14882,9 @@ function renderSoloStageTracker() {
   const gTotal = soloMatchesCache.length;
   const gDone = soloMatchesCache.filter(m => m.status === 'completed').length;
   let prevComplete = gTotal > 0 && gDone === gTotal;
-  const draw = { R16: 'soloGenerateFirstKnockout()' };
+  const draw = soloIsLeague() ? { PO: 'soloGenerateFirstKnockout()' } : { R16: 'soloGenerateFirstKnockout()' };
   let champion = '';
-  const cards = SOLO_STAGES.map(s => {
+  const cards = soloStages().map(s => {
     const docs = soloKnockoutCache.filter(m => m.tieId && m.stage === s.key);
     const ties = soloTiesOfStage(s.key);
     let state, text, btn = '';
@@ -14872,7 +14899,7 @@ function renderSoloStageTracker() {
     } else if (prevComplete) {
       state = 'ready'; text = 'প্রস্তুত'; prevComplete = false;
       const fn = draw[s.key] || 'soloGenerateNextKnockoutRound()';
-      const label = s.key === 'R16' ? 'Round of 16 তৈরি করো' : s.key === 'F' ? '🏆 Final তৈরি করো' : `🎲 ${s.name} Draw`;
+      const label = s.key === 'PO' ? 'Playoffs তৈরি করো' : s.key === 'R16' ? 'Round of 16 তৈরি করো' : s.key === 'F' ? '🏆 Final তৈরি করো' : `🎲 ${s.name} Draw`;
       btn = `<button class="btn btn-gold" onclick="${fn}" style="padding:8px 12px;font-size:12px;margin-top:8px;width:100%">${label}</button>`;
     } else { state = 'locked'; text = '🔒 আগের ধাপ শেষ হয়নি'; prevComplete = false; }
     const border = state === 'ready' ? 'var(--gold)' : state === 'done' ? 'var(--green)' : 'var(--border)';
@@ -15009,9 +15036,13 @@ window.saveSoloKnockoutResult = function(id) {
 //  SOLO AUTO FORMAT: 24 (4x6, top 4) / 32 (8x4, top 2) -> Round of 16 -> QF -> SF (2 legs) -> Final (1 leg)
 const SOLO_FORMATS = {
   '24': { players: 24, groups: 4, groupSize: 6, qual: 4 },
-  '32': { players: 32, groups: 8, groupSize: 4, qual: 2 }
+  '32': { players: 32, groups: 8, groupSize: 4, qual: 2 },
+  // 36 players = 9 Pots x 4 · each pot round-robin (3 matches each) · ONE combined league table
+  // 1-8 direct Round of 16 · 9-24 Playoffs · 25-36 eliminated
+  '36': { players: 36, groups: 9, groupSize: 4, qual: 0, league: true, direct: 8, playoffs: 16, potLabel: 'Pot' }
 };
 const SOLO_STAGES = [
+  { key: 'PO',  name: 'Playoffs', legs: 2 },
   { key: 'R16', name: 'Round of 16', legs: 2 },
   { key: 'QF',  name: 'Quarter-Final', legs: 2 },
   { key: 'SF',  name: 'Semi-Final', legs: 2 },
@@ -15020,6 +15051,76 @@ const SOLO_STAGES = [
 let soloConfigCache = null;
 
 function soloQualCount() { return (soloConfigCache && soloConfigCache.qual) || 2; }
+function soloIsLeague() { return !!(soloConfigCache && soloConfigCache.league); }
+// stages that apply to the active tournament (Playoffs exist only in the 36-player league format)
+function soloStages() { return SOLO_STAGES.filter(s => s.key !== 'PO' || soloIsLeague()); }
+
+// Combined league table across all pots (36-player format)
+function soloLeagueTable() {
+  const rows = [];
+  soloGroupsCache.forEach(g => soloGroupTable(g).forEach(r => rows.push({ ...r, gid: g.id, gname: g.name })));
+  return rows.sort((x, y) => y.pts - x.pts || (y.gf - y.ga) - (x.gf - x.ga) || y.gf - x.gf);
+}
+function soloLeagueStandingsHTML() {
+  const cfg = soloConfigCache || {};
+  const direct = cfg.direct || 8, po = cfg.playoffs || 16;
+  const rows = soloLeagueTable();
+  const status = i => i < direct ? ['d', 'Direct R16', 'q'] : i < direct + po ? ['p', 'Playoffs', 'po'] : ['e', 'Eliminated', 'el'];
+  const gd = r => (r.gf - r.ga > 0 ? '+' : '') + (r.gf - r.ga);
+  const legend = `<div class="solo-legend3">
+    <span><i style="border-left:3px solid var(--gold);background:rgba(214,180,110,.14)"></i>${1}–${direct} Direct Round of 16</span>
+    <span><i style="border-left:3px solid rgba(214,180,110,.4);background:rgba(214,180,110,.05)"></i>${direct + 1}–${direct + po} Playoffs</span>
+    <span><i style="border-left:3px solid rgba(160,60,60,.55)"></i>${direct + po + 1}–${rows.length} Eliminated</span></div>`;
+  const combined = `<div class="solo-grp">
+    <div class="solo-grp-head"><span class="solo-grp-badge">&#9733;</span><span class="solo-grp-name">Combined League Table</span><span class="solo-grp-meta">${rows.length} players</span></div>
+    <div class="solo-tbl-wrap"><table class="standings-table solo-tbl">
+      <thead><tr><th>#</th><th>Player</th><th>Pot</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th class="pts-col">Pts</th><th>Status</th></tr></thead>
+      <tbody>${rows.map((r, i) => { const [k, lbl, cls] = status(i); return `<tr class="${cls}">
+        <td class="solo-pos">${i + 1}</td><td class="solo-pl">${soloPlayerName(r.uid)}</td><td>${soloGroupLetter({ name: r.gname })}</td>
+        <td>${r.mp}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}</td><td>${r.ga}</td><td>${gd(r)}</td>
+        <td class="solo-pts">${r.pts}</td><td><span class="solo-st ${k}">${lbl}</span></td></tr>`; }).join('')}</tbody>
+    </table></div></div>`;
+  const pots = soloGroupsCache.map(g => `<div class="solo-grp">
+    <div class="solo-grp-head"><span class="solo-grp-badge">${soloGroupLetter(g)}</span><span class="solo-grp-name">${g.name}</span><span class="solo-grp-meta">${soloMatchesCache.filter(m => m.groupId === g.id && m.status === 'completed').length}/${soloMatchesCache.filter(m => m.groupId === g.id).length} played</span></div>
+    <div class="solo-tbl-wrap"><table class="standings-table solo-tbl">
+      <thead><tr><th>#</th><th>Player</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>GD</th><th class="pts-col">Pts</th></tr></thead>
+      <tbody>${soloGroupTable(g).map((r, i) => `<tr><td class="solo-pos">${i + 1}</td><td class="solo-pl">${soloPlayerName(r.uid)}</td><td>${r.mp}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${gd(r)}</td><td class="solo-pts">${r.pts}</td></tr>`).join('')}</tbody>
+    </table></div></div>`).join('');
+  return legend + combined + `<div class="solo-stage"><span>Pot Tables<small>Each pot plays among itself</small></span></div>` + pots;
+}
+
+// Public "Structure" tab: explains the format of the active tournament
+window.loadSoloStructure = async function() {
+  await fetchSoloData();
+  const wrap = document.getElementById('soloStructureWrap');
+  if (!wrap) return;
+  const f24_32 = `<div class="solo-card"><h4>Group Format (24 / 32 Players)</h4><ul>
+      <li>২৪ জন = ৪টি Group × ৬ জন (Top 4 advance) · ৩২ জন = ৮টি Group × ৪ জন (Top 2 advance)</li>
+      <li>Group-এর সবাই সবার সাথে ১টি করে ম্যাচ খেলবে।</li>
+      <li>Win = 3 · Draw = 1 · Loss = 0</li>
+      <li>Top ১৬ জন → Round of 16 → Quarter-Final → Semi-Final → Final</li></ul></div>`;
+  const f36 = `<div style="text-align:center"><span class="solo-struct-pill">36 Players &middot; 9 Pots &times; 4 Players</span></div>
+    <div class="solo-pots">${Array.from({ length: 9 }, (_, i) => `<div class="solo-pot"><b>POT ${i + 1}</b><strong>4</strong><small>Players</small></div>`).join('')}</div>
+    <div class="solo-card"><h4>League Phase</h4><ul>
+      <li>প্রতিটি Pot-এর ৪ জন প্লেয়ার নিজেদের মধ্যে খেলবে।</li>
+      <li>প্রত্যেক প্লেয়ার ৩টি ম্যাচ খেলবে।</li>
+      <li>মোট ম্যাচ ৫৪টি।</li>
+      <li>সব ৩৬ জন একটি Combined League Table-এ থাকবে।</li></ul></div>
+    <div class="solo-card"><h4>Point System</h4><ul><li>Win = 3</li><li>Draw = 1</li><li>Loss = 0</li></ul></div>
+    <div class="solo-card"><h4>Combined League Table</h4>
+      <table class="standings-table solo-tbl"><thead><tr><th>Position</th><th>Status</th></tr></thead><tbody>
+        <tr class="q"><td>1–8</td><td><span class="solo-st d">Direct Round of 16</span></td></tr>
+        <tr class="po"><td>9–24</td><td><span class="solo-st p">Playoffs</span></td></tr>
+        <tr class="el"><td>25–36</td><td><span class="solo-st e">Eliminated</span></td></tr></tbody></table></div>
+    <div class="solo-card"><h4>Knockout Path</h4><ul>
+      <li>Playoffs (৯–২৪): ৯ vs ২৪, ১০ vs ২৩ … ১৬ vs ১৭ — দুই লেগ, aggregate।</li>
+      <li>৮ জন Playoff winner + সরাসরি যাওয়া Top ৮ = Round of 16।</li>
+      <li>Round of 16 → Quarter-Final → Semi-Final → Final</li></ul></div>`;
+  let html;
+  if (!soloConfigCache) html = f36 + f24_32;
+  else html = soloIsLeague() ? f36 : f24_32;
+  wrap.innerHTML = html;
+};
 
 function soloStageIndex(key) { return SOLO_STAGES.findIndex(s => s.key === key); }
 
@@ -15126,13 +15227,29 @@ window.soloAutoCount = function() {
   if (!el || !c) return;
   const n = Array.from(el.selectedOptions).length;
   const f = SOLO_FORMATS[String(n)];
+  // fixed-group dropdown: "Pot 1..9" for the 36-player league, "Group A..H" otherwise
+  const fg = document.getElementById('soloFixedGroup');
+  if (fg) {
+    const isLg = !!(f && f.league), want = isLg ? 'pot' : 'grp';
+    if (fg.dataset.mode !== want) {
+      const cur = fg.value, cnt = isLg ? 9 : 8;
+      fg.innerHTML = '<option value="">-- কোনো fixed ' + (isLg ? 'pot' : 'group') + ' নেই --</option>' +
+        Array.from({ length: cnt }, (_, i) => `<option value="${i}">${isLg ? 'Pot ' + (i + 1) : 'Group ' + String.fromCharCode(65 + i)}</option>`).join('');
+      fg.value = (cur !== '' && parseInt(cur) < cnt) ? cur : '';
+      fg.dataset.mode = want;
+    }
+  }
   if (f) {
     document.getElementById('soloAutoFormat').value = String(n);
-    c.textContent = `✅ ${n} player → ${f.groups} group × ${f.groupSize} jon · proti group theke Top ${f.qual} knockout-e jabe. Draw korar jonno ready!`;
+    c.textContent = f.league
+      ? `✅ ${n} player → ${f.groups} Pot × ${f.groupSize} jon · League phase (54 match) · Combined table: Top ${f.direct} direct R16, ${f.direct + 1}–${f.direct + f.playoffs} Playoffs. Draw korar jonno ready!`
+      : `✅ ${n} player → ${f.groups} group × ${f.groupSize} jon · proti group theke Top ${f.qual} knockout-e jabe. Draw korar jonno ready!`;
     c.style.color = 'var(--green)';
   } else {
-    const need = n < 24 ? 24 - n : (n < 32 ? 32 - n : n - 32);
-    c.textContent = n === 0 ? 'Kono player select kora hoyni' : `${n} jon select — ${n < 24 ? `আরও ${need} jon hole 24` : n < 32 ? `আরও ${need} jon hole 32 (ba ${n - 24} jon bad dile 24)` : `${need} jon bad dile 32`} hobe`;
+    const sizes = [24, 32, 36];
+    const up = sizes.find(x => x > n), down = [...sizes].reverse().find(x => x < n);
+    c.textContent = n === 0 ? 'Kono player select kora hoyni'
+      : `${n} jon select — ${up ? `আরও ${up - n} jon hole ${up}` : ''}${up && down ? ' ba ' : ''}${down ? `${n - down} jon bad dile ${down}` : ''} hobe (24 / 32 / 36)`;
     c.style.color = 'var(--text3)';
   }
 };
@@ -15163,10 +15280,10 @@ window.soloAutoDraw = async function() {
   const key = String(uids.length);
   const fmt = SOLO_FORMATS[key];
   if (!fmt) {
-    const target = uids.length < 24 ? 24 : 32;
+    const target = uids.length < 24 ? 24 : uids.length < 32 ? 32 : 36;
     const fx = document.getElementById('soloFixedPlayers');
     const fxN = fx ? Array.from(fx.selectedOptions).length : 0;
-    st.textContent = `❌ Total 24 ba 32 jon player lagbe, ekhon ${uids.length} jon select${fxN ? ` (fixed ${fxN} jon shoho)` : ''}. Upor-er Players list theke baki ${uids.length < 32 && uids.length > 24 ? '(32 hole ' + (32 - uids.length) + ' jon aro, ba 24 hole ' + (uids.length - 24) + ' jon bad)' : (target - uids.length) + ' jon'} select korun — fixed box shudhu bole kon player kon group-e thakbe.`;
+    st.textContent = `❌ Total 24, 32 ba 36 jon player lagbe, ekhon ${uids.length} jon select${fxN ? ` (fixed ${fxN} jon shoho)` : ''}. Upor-er Players list theke baki ${uids.length < 32 && uids.length > 24 ? '(32 hole ' + (32 - uids.length) + ' jon aro, ba 24 hole ' + (uids.length - 24) + ' jon bad)' : (target - uids.length) + ' jon'} select korun — fixed box shudhu bole kon player kon group-e thakbe.`;
     st.style.color = 'var(--red)'; return;
   }
   document.getElementById('soloAutoFormat').value = key;
@@ -15193,13 +15310,14 @@ window.soloAutoDraw = async function() {
   for (let gi = 0; gi < fmt.groups; gi++) {
     const gid = 'g' + (gi + 1);
     const playerUids = slots[gi];
-    groups[gid] = { name: 'Group ' + String.fromCharCode(65 + gi), playerUids, createdAt: now };
+    groups[gid] = { name: fmt.league ? 'Pot ' + (gi + 1) : 'Group ' + String.fromCharCode(65 + gi), playerUids, createdAt: now };
     let n = 0;
     soloRoundRobin(playerUids).forEach((md, r) => md.forEach(([p1, p2]) => {
       matches[`${gid}_m${String(++n).padStart(2, '0')}`] = { groupId: gid, matchday: r + 1, player1Uid: p1, player2Uid: p2, player1Score: null, player2Score: null, status: 'pending', createdAt: now };
     }));
   }
   const config = { format: key, players: fmt.players, groups: fmt.groups, groupSize: fmt.groupSize, qual: fmt.qual, createdAt: now };
+  if (fmt.league) { config.league = true; config.direct = fmt.direct; config.playoffs = fmt.playoffs; }
   let putRes;
   if (soloActiveId === 'main') {
     // main tournament lives at typsolo root, so don't wipe typsolo/tournaments*
@@ -15319,6 +15437,7 @@ window.soloGenerateFirstKnockout = async function() {
   if (soloKnockoutCache.length) { st.textContent = 'Knockout already ache. Notun kore korte hole notun draw korun.'; st.style.color = 'var(--red)'; return; }
   const pending = soloMatchesCache.filter(m => m.status !== 'completed').length;
   if (!soloMatchesCache.length || pending) { st.textContent = `Group stage sesh hoyni (${pending} match baki)`; st.style.color = 'var(--red)'; return; }
+  if (soloIsLeague()) { return soloGeneratePlayoffs(st); }
   const q = [];
   soloGroupsCache.forEach(g => {
     soloGroupTable(g).slice(0, soloConfigCache.qual).forEach((r, i) => q.push({ uid: r.uid, gid: g.id, rank: i + 1, pts: r.pts, gd: r.gf - r.ga, gf: r.gf }));
@@ -15341,12 +15460,51 @@ window.soloGenerateFirstKnockout = async function() {
   // bracket order so winners meet correctly: 1v16, 8v9, 5v12, 4v13, 3v14, 6v11, 7v10, 2v15
   const order = [0, 7, 4, 3, 2, 5, 6, 1];
   let docs = {};
-  order.forEach((pi, tIndex) => { docs = { ...docs, ...soloMakeTie(SOLO_STAGES[0], tIndex, pairs[pi].hi.uid, pairs[pi].lo.uid) }; });
+  order.forEach((pi, tIndex) => { docs = { ...docs, ...soloMakeTie(SOLO_STAGES.find(x => x.key === 'R16'), tIndex, pairs[pi].hi.uid, pairs[pi].lo.uid) }; });
   await fetch(`${SOLO_DB}/${soloPath()}/knockout.json`, { method: 'PATCH', body: JSON.stringify(docs) });
   st.textContent = 'Round of 16 generate hoyeche (8 tie, 2 leg)!'; st.style.color = 'var(--green)';
   await fetchSoloData();
   renderSoloAdminKnockoutList();
 };
+
+//  ADMIN (36-player league): combined table 9-24 -> Playoffs (9v24, 10v23 ... 16v17)
+async function soloGeneratePlayoffs(st) {
+  const rows = soloLeagueTable();
+  const cfg = soloConfigCache, direct = cfg.direct || 8, npo = cfg.playoffs || 16;
+  const po = rows.slice(direct, direct + npo);
+  if (po.length !== npo) { st.textContent = `Playoff-er jonno ${npo} jon lagbe, ${po.length} jon pawa gelo`; st.style.color = 'var(--red)'; return; }
+  if (!confirm(`League phase sesh. Combined table-er ${direct + 1}–${direct + npo} number (${npo} jon) Playoffs-e khelbe.\nPlayoffs তৈরি করবে?\n\n(Position ${direct} ar ${direct + 1}-er point/GD/GF barabor hole age manually check koro.)`)) { st.textContent = 'Cancelled.'; return; }
+  const stage = SOLO_STAGES.find(x => x.key === 'PO');
+  let docs = {};
+  for (let i = 0; i < npo / 2; i++) docs = { ...docs, ...soloMakeTie(stage, i, po[i].uid, po[npo - 1 - i].uid) };
+  await fetch(`${SOLO_DB}/${soloPath()}/knockout.json`, { method: 'PATCH', body: JSON.stringify(docs) });
+  st.textContent = `Playoffs generate hoyeche (${npo / 2} tie, 2 leg)!`; st.style.color = 'var(--green)';
+  await fetchSoloData();
+  renderSoloAdminKnockoutList();
+}
+
+//  ADMIN (36-player league): Top 8 direct + 8 Playoff winners -> Round of 16
+async function soloGenerateR16FromPlayoffs(infos) {
+  const st = document.getElementById('soloAutoStatus');
+  const direct = soloConfigCache.direct || 8;
+  const top = soloLeagueTable().slice(0, direct);
+  const winners = infos.map(i => i.winner); // index = playoff tie (0 = 9v24 ... 7 = 16v17)
+  if (top.length !== direct || winners.length !== direct) { st.textContent = 'Round of 16-er jonno 8 direct + 8 playoff winner lagbe'; st.style.color = 'var(--red)'; return; }
+  if (!confirm('Round of 16 তৈরি করবে?\n\nTop 8 (direct) + 8 jon Playoff winner. Seed 1 → 16v17 winner, Seed 8 → 9v24 winner.')) { st.textContent = 'Cancelled.'; return; }
+  const stage = SOLO_STAGES.find(x => x.key === 'R16');
+  const order = [0, 7, 4, 3, 2, 5, 6, 1]; // bracket: 1v, 8v, 5v, 4v, 3v, 6v, 7v, 2v
+  let docs = {};
+  const pairs = [];
+  order.forEach((pi, tIndex) => {
+    const hi = top[pi].uid, lo = winners[direct - 1 - pi];
+    docs = { ...docs, ...soloMakeTie(stage, tIndex, hi, lo) };
+    pairs.push(`${soloPlayerName(hi)} vs ${soloPlayerName(lo)}`);
+  });
+  await fetch(`${SOLO_DB}/${soloPath()}/knockout.json`, { method: 'PATCH', body: JSON.stringify(docs) });
+  st.textContent = '✅ Round of 16 ready! ' + pairs.join(' · '); st.style.color = 'var(--green)';
+  await fetchSoloData();
+  renderSoloAdminKnockoutList();
+}
 
 //  ADMIN: previous knockout round -> next round (auto)
 window.soloGenerateNextKnockoutRound = async function() {
@@ -15361,6 +15519,7 @@ window.soloGenerateNextKnockoutRound = async function() {
   const notDone = infos.filter(i => !i.done || !i.winner).length;
   if (notDone) { st.textContent = `${SOLO_STAGES[idx].name} sesh hoyni (${notDone} tie baki / penalty winner nei)`; st.style.color = 'var(--red)'; return; }
   const next = SOLO_STAGES[idx + 1];
+  if (SOLO_STAGES[idx].key === 'PO' && next.key === 'R16') return soloGenerateR16FromPlayoffs(infos);
   const mode = (document.getElementById('soloDrawMode') || {}).value || 'random';
   let winners = infos.map(i => i.winner);
   const random = mode === 'random' && next.key !== 'F';
